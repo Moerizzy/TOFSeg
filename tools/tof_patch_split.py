@@ -89,7 +89,10 @@ def get_img_mask_padded(image, mask, patch_size, mode):
 def pv2rgb(mask):
     h, w = mask.shape[0], mask.shape[1]
     mask_rgb = np.zeros(shape=(h, w, 3), dtype=np.uint8)
+    mask = mask[:, :, 0]
+    print(mask.shape, mask_rgb.shape)
     mask_convert = mask[np.newaxis, :, :]
+    print(mask_convert.shape)
     mask_rgb[np.all(mask_convert == 3, axis=0)] = [0, 255, 0]
     mask_rgb[np.all(mask_convert == 0, axis=0)] = [255, 255, 255]
     mask_rgb[np.all(mask_convert == 1, axis=0)] = [255, 0, 0]
