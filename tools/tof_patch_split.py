@@ -90,9 +90,7 @@ def pv2rgb(mask):
     h, w = mask.shape[0], mask.shape[1]
     mask_rgb = np.zeros(shape=(h, w, 3), dtype=np.uint8)
     mask = mask[:, :, 0]
-    print(mask.shape, mask_rgb.shape)
     mask_convert = mask[np.newaxis, :, :]
-    print(mask_convert.shape)
     mask_rgb[np.all(mask_convert == 3, axis=0)] = [0, 255, 0]
     mask_rgb[np.all(mask_convert == 0, axis=0)] = [255, 255, 255]
     mask_rgb[np.all(mask_convert == 1, axis=0)] = [255, 0, 0]
@@ -109,6 +107,7 @@ def car_color_replace(mask):
     return mask
 
 
+# It is not needed as the mask is already 2D
 def rgb_to_2D_label(_label):
     _label = _label.transpose(2, 0, 1)
     label_seg = np.zeros(_label.shape[1:], dtype=np.uint8)
