@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from geoseg.losses import *
 from geoseg.datasets.tof_dataset import *
-from geoseg.models.BANet import BANet
+from geoseg.models.MANet import MANet
 from tools.utils import Lookahead
 from tools.utils import process_model_params
 
@@ -17,9 +17,9 @@ backbone_weight_decay = 0.01
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "abcnet-r18-512-crop-ms-e105"
+weights_name = "manet-r18-512-crop-ms-e105"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "abcnet-r18-512-crop-ms-e105"
+test_weights_name = "manet-r18-512-crop-ms-e105"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
@@ -30,7 +30,7 @@ pretrained_ckpt_path = None  # the path for the pretrained model weight
 gpus = "auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
-net = BANet(num_classes=num_classes)
+net = MANet(num_classes=num_classes)
 
 # define the loss
 # define the loss

@@ -11,3 +11,5 @@ einops
 addict
 ftfy
 regex
+geopandas
+rasterio
