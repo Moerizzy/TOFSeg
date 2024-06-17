@@ -68,10 +68,19 @@ if __name__ == "__main__":
 
     print("Selected masks", mask_paths_selected)
 
-    # save average distribution and selected masks
+    # save average distribution and selected masks and their distributions
     if not os.path.exists(f"data/sites/{state}/Stats"):
         os.makedirs(f"data/sites/{state}/Stats")
     np.savetxt(f"data/sites/{state}/Stats/average_distribution.txt", cf_avg)
     np.savetxt(
         f"data/sites/{state}/Stats/selected_masks.txt", mask_paths_selected, fmt="%s"
+    )
+    np.savetxt(
+        f"data/sites/{state}/Stats/selected_masks_distribution.txt",
+        cf_list,
+        fmt="%s",
+    )
+    np.savetxt(
+        f"data/sites/{state}/Stats/average_distribution_selected_masks.txt",
+        cf_avg_select,
     )
