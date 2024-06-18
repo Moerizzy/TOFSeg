@@ -1,11 +1,16 @@
-import os
+import argparse
+from pathlib import Path
 import numpy as np
 from PIL import Image
-import argparse
 
 
-def parse_args():
-    """Parse the command line arguments for the TOF script"""
+def parse_args() -> argparse.Namespace:
+    """
+    Parse the command line arguments for the TOF script.
+
+    Returns:
+        argparse.Namespace: An object containing the parsed command line arguments.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--state",
@@ -15,7 +20,18 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_statistics(mask_path, num_classes):
+def get_statistics(mask_path: str, num_classes: int) -> np.ndarray:
+    """
+    Calculate the class frequencies of a given mask image.
+
+    Args:
+        mask_path (str): The path to the mask image file.
+        num_classes (int): The number of classes in the mask image.
+
+    Returns:
+        numpy.ndarray: An array containing the class frequencies.
+
+    """
     mask = Image.open(mask_path)
     mask_crop = np.array(mask)
     bins = np.array(range(num_classes))
@@ -25,62 +41,47 @@ def get_statistics(mask_path, num_classes):
     return cf
 
 
-if __name__ == "__main__":
+def main() -> None:
     args = parse_args()
     state = args.state
-    masks_dir = f"data/sites/{state}/Masks"
-    mask_paths = [
-        file
-        for file in os.listdir(f"data/sites/{state}/Masks")
-        if file.endswith(".tif")
-    ]
+    masks_dir = Path(f"data/sites/{state}/Masks")
+    mask_paths = [file for file in masks_dir.iterdir() if file.suffix == ".tif"]
     num_classes = 6
     cf_list = []
     for mask_path in mask_paths:
-        mask_path = os.path.join(masks_dir, mask_path)
-        cf = get_statistics(mask_path, num_classes)
+        cf = get_statistics(str(mask_path), num_classes)
         cf_list.append(cf)
 
-    # do a average over all the masks
+    # Calculate average distribution
     cf_list = np.array(cf_list)
     cf_avg = np.mean(cf_list, axis=0)
-    print("Average Distribution", cf_avg)
-    mask_names = [mask_path.split("/")[-1] for mask_path in mask_paths]
-    cf_avg_with_names = list(zip(mask_names, cf_list))
+    print("Average Distribution:", cf_avg)
 
-    # Save as a txt file
-
-    # Choose 5 of the masks so they have the same distribution as the average
-    mask_paths = np.array(mask_paths)
+    # Choose 5 masks with similar distribution as the average
     mask_paths_selected = []
     cf_avg_select = np.zeros(num_classes - 1)
     while not np.allclose(cf_avg, cf_avg_select, atol=0.01):
         cf_list = []
         mask_paths_selected = []
-        for i in range(5):
-            mask_path = mask_paths[np.random.choice(len(mask_paths))]
+        for _ in range(5):
+            mask_path = np.random.choice(mask_paths)
             mask_paths_selected.append(mask_path)
-            mask_path = os.path.join(masks_dir, mask_path)
-            cf = get_statistics(mask_path, num_classes)
+            cf = get_statistics(str(mask_path), num_classes)
             cf_list.append(cf)
         cf_list = np.array(cf_list)
         cf_avg_select = np.mean(cf_list, axis=0)
 
-    print("Selected masks", mask_paths_selected)
+    print("Average Distribution Selected Masks:", cf_avg_select)
+    print("Selected masks:", mask_paths_selected)
 
-    # save average distribution and selected masks and their distributions
-    if not os.path.exists(f"data/sites/{state}/Stats"):
-        os.makedirs(f"data/sites/{state}/Stats")
-    np.savetxt(f"data/sites/{state}/Stats/average_distribution.txt", cf_avg)
-    np.savetxt(
-        f"data/sites/{state}/Stats/selected_masks.txt", mask_paths_selected, fmt="%s"
-    )
-    np.savetxt(
-        f"data/sites/{state}/Stats/selected_masks_distribution.txt",
-        cf_list,
-        fmt="%s",
-    )
-    np.savetxt(
-        f"data/sites/{state}/Stats/average_distribution_selected_masks.txt",
-        cf_avg_select,
-    )
+    # Save average distribution and selected masks and their distributions
+    stats_dir = Path(f"data/sites/{state}/Stats")
+    stats_dir.mkdir(parents=True, exist_ok=True)
+    np.savetxt(stats_dir / "average_distribution.txt", cf_avg)
+    np.savetxt(stats_dir / "selected_masks.txt", mask_paths_selected, fmt="%s")
+    np.savetxt(stats_dir / "selected_masks_distribution.txt", cf_list, fmt="%s")
+    np.savetxt(stats_dir / "average_distribution_selected_masks.txt", cf_avg_select)
+
+
+if __name__ == "__main__":
+    main()
