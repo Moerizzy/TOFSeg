@@ -232,8 +232,6 @@ def tof_format(inp):
         print(img_path)
         print(mask_path)
         return
-    # img = Image.open(img_path)  # .convert("RGB")
-    # mask = Image.open(mask_path)  # .convert("RGB")
     if gt:
         mask_ = car_color_replace(mask)
         out_origin_mask_path = os.path.join(
@@ -316,8 +314,8 @@ if __name__ == "__main__":
     val_scale = args.val_scale
     split_size = args.split_size
     stride = args.stride
-    img_paths = glob.glob(os.path.join(imgs_dir, "*.tif"))
-    mask_paths_raw = glob.glob(os.path.join(masks_dir, "*.tif"))
+    img_paths = glob.glob(os.path.join(imgs_dir, "*.tiff"))
+    mask_paths_raw = glob.glob(os.path.join(masks_dir, "*.tiff"))
     if eroded:
         mask_paths = [(p[:-15] + ".tif") for p in mask_paths_raw]
     else:
