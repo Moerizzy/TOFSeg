@@ -243,14 +243,6 @@ def tof_format(inp):
         mode=mode,
         val_scale=val_scale,
     )
-    print(
-        img_filename,
-        mask_filename,
-        len(image_list),
-        len(mask_list),
-        image_list,
-        mask_list,
-    )
     assert img_filename == mask_filename and len(image_list) == len(mask_list)
     for m in range(len(image_list)):
         k = 0
