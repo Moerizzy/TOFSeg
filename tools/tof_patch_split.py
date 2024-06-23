@@ -225,8 +225,15 @@ def tof_format(inp):
     )
     if eroded:
         mask_path = mask_path[:-4] + "_noBoundary.tif"
-    img = Image.open(img_path)  # .convert("RGB")
-    mask = Image.open(mask_path)  # .convert("RGB")
+    try:
+        img = Image.open(img_path).convert("RGB")
+        mask = Image.open(mask_path).convert("RGB")
+    except:
+        print(img_path)
+        print(mask_path)
+        return
+    # img = Image.open(img_path)  # .convert("RGB")
+    # mask = Image.open(mask_path)  # .convert("RGB")
     if gt:
         mask_ = car_color_replace(mask)
         out_origin_mask_path = os.path.join(
