@@ -19,11 +19,7 @@ for site in sites:
         for line in file:
             # Get the path from the line and strip any surrounding whitespace
             file_path = line.strip()
-            file_path2 = (
-                file_path.replace("mask", "TOP")
-                .replace("Masks", "TOP")
-                .replace("tif", "tiff")
-            )
+            file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
             print(file_path2)
 
             # Only proceed if the path is not empty
@@ -41,7 +37,7 @@ for site in sites:
         # copying all the remaining files that are not part of the test set
         print("Copying remaining files to train set.")
         for file in os.listdir(f"data/sites/{site}/Masks"):
-            file = file.replace("tif", "tiff")
+
             if file not in os.listdir(destination_directory_test_masks):
                 shutil.copy2(
                     f"data/sites/{site}/Masks/{file}",
