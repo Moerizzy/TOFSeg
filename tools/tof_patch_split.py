@@ -20,6 +20,7 @@ from torchvision.transforms import (
     RandomVerticalFlip,
 )
 import random
+import tifffile
 
 SEED = 42
 
@@ -226,7 +227,7 @@ def tof_format(inp):
     if eroded:
         mask_path = mask_path[:-4] + "_noBoundary.tif"
     try:
-        img = Image.open(img_path).convert("RGB")
+        img = tifffile.imread(img_path)
     except Exception as e:
         print(f"Error opening image: {e}")
     mask = Image.open(mask_path).convert("RGB")
