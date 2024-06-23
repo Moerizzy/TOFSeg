@@ -225,7 +225,10 @@ def tof_format(inp):
     )
     if eroded:
         mask_path = mask_path[:-4] + "_noBoundary.tif"
-    img = Image.open(img_path).convert("RGB")
+    try:
+        img = Image.open(img_path).convert("RGB")
+    except Exception as e:
+        print(f"Error opening image: {e}")
     mask = Image.open(mask_path).convert("RGB")
     if gt:
         mask_ = car_color_replace(mask)
