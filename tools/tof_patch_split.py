@@ -20,6 +20,7 @@ from torchvision.transforms import (
     RandomVerticalFlip,
 )
 import random
+import tifffile
 
 SEED = 42
 
@@ -226,8 +227,14 @@ def tof_format(inp):
     if eroded:
         mask_path = mask_path[:-4] + "_noBoundary.tif"
     try:
-        img = Image.open(img_path).convert("RGB")
-        mask = Image.open(mask_path).convert("RGB")
+        # Read the TIFF image as a NumPy array
+        img_array = tifffile.imread(img_path)
+        mask_array = tifffile.imread(mask_path)
+        # Convert the NumPy array to a PIL Image object
+        img = Image.fromarray(img_array).convert("RGB")
+        mask = Image.fromarray(mask_array).convert("RGB")
+        # img = Image.open(img_path).convert("RGB")
+        # mask = Image.open(mask_path).convert("RGB")
     except:
         print(img_path)
         print(mask_path)
@@ -314,8 +321,8 @@ if __name__ == "__main__":
     val_scale = args.val_scale
     split_size = args.split_size
     stride = args.stride
-    img_paths = glob.glob(os.path.join(imgs_dir, "*.tiff"))
-    mask_paths_raw = glob.glob(os.path.join(masks_dir, "*.tiff"))
+    img_paths = glob.glob(os.path.join(imgs_dir, "*.tif"))
+    mask_paths_raw = glob.glob(os.path.join(masks_dir, "*.tif"))
     if eroded:
         mask_paths = [(p[:-15] + ".tif") for p in mask_paths_raw]
     else:
