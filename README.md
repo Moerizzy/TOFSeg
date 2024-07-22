@@ -121,6 +121,18 @@ pip install -r GeoSeg/requirements.txt
 
 Download the datasets from the official website and split them yourself.
 
+**Trees outside Forests**
+
+Generate the training set.
+```
+python GeoSeg/tools/tof_patch_split.py --img-dir "data/tof/train_images" --mask-dir "data/tof/train_masks" --output-img-dir "data/tof/train/images_1024" --output-mask-dir "data/tof/train/masks_1024" --mode "train" --split-size 1024 --stride 512
+INFO:albumentations.check_version:A new version of Albumentations is available: 1.4.10 (you have 1.4.8). Upgrade using: pip install --upgrade albumentations
+images spliting spends: 1070.2311720848083 s
+```
+Generate the testing set.
+```
+python GeoSeg/tools/tof_patch_split.py --img-dir "data/tof/test_images" --mask-dir "data/tof/test_masks" --output-img-dir "data/tof/test/images_1024" --output-mask-dir "data/tof/test/masks_1024" --mode "val" --split-size 1024 --stride 1024
+```
 **Vaihingen**
 
 Generate the training set.
