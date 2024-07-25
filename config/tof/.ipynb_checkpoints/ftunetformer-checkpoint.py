@@ -1,41 +1,47 @@
 from torch.utils.data import DataLoader
 from geoseg.losses import *
 from geoseg.datasets.tof_dataset import *
-from geoseg.models.UNetFormer import UNetFormer
+from geoseg.models.FTUNetFormer import ft_unetformer
 from tools.utils import Lookahead
 from tools.utils import process_model_params
 
 # training hparam
-max_epoch = 105
+max_epoch = 45
 ignore_index = len(CLASSES)
-train_batch_size = 32
-val_batch_size = 32
+train_batch_size = 8
+val_batch_size = 4
 lr = 6e-4
-weight_decay = 0.01
+weight_decay = 2.5e-4
 backbone_lr = 6e-5
-backbone_weight_decay = 0.01
+backbone_weight_decay = 2.5e-4
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "unetformer-1024-dropout05"
+weights_name = "ftunetformer-512-ms-crop"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer-1024"
+test_weights_name = "ftunetformer-512-ms-crop"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
 save_top_k = 1
-save_last = True
+save_last = False
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
-gpus =  "auto"#[1, 2, 3] #  default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
+gpus = [1]#"auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
-net = UNetFormer(num_classes=num_classes, dropout=0.5)
+net = ft_unetformer(num_classes=num_classes, decoder_channels=256)
 
 # define the loss
-loss = UnetFormerLoss(ignore_index=ignore_index)
-use_aux_loss = True
+loss = JointLoss(
+    SoftCrossEntropyLoss(smooth_factor=0.05, ignore_index=ignore_index),
+    DiceLoss(smooth=0.05, ignore_index=ignore_index),
+    1.0,
+    1.0,
+)
+
+use_aux_loss = False
 
 # define the dataloader
 
@@ -49,7 +55,7 @@ test_dataset = TOFDataset(data_root="data/tof/test", transform=val_aug)
 train_loader = DataLoader(
     dataset=train_dataset,
     batch_size=train_batch_size,
-    num_workers=16,
+    num_workers=4,
     pin_memory=True,
     shuffle=True,
     drop_last=True,
@@ -58,7 +64,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=16,
+    num_workers=4,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
