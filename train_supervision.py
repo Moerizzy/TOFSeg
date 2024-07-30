@@ -104,6 +104,11 @@ class Supervision_Train(pl.LightningModule):
         # print(iou_value)
         self.metrics_train.reset()
         log_dict = {"train_mIoU": mIoU, "train_F1": F1, "train_OA": OA}
+
+        # Add class-specific IoU values to log_dict
+        for class_name, iou in iou_value.items():
+            log_dict[f"train_IoU_{class_name}"] = iou
+
         self.log_dict(log_dict, prog_bar=False, sync_dist=True)
 
     def validation_step(self, batch, batch_idx):
@@ -118,9 +123,9 @@ class Supervision_Train(pl.LightningModule):
         self.log(
             "val_loss",
             loss_val,
-            on_step=True,
+            on_step=False,
             on_epoch=True,
-            prog_bar=True,
+            prog_bar=False,
             sync_dist=True,
         )
 

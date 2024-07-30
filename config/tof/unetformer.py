@@ -17,21 +17,21 @@ backbone_weight_decay = 0.01
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "unetformer-1024-dropout05"
+weights_name = "unetformer-r18-1024"
 weights_path = "model_weights/tof/{}".format(weights_name)
 test_weights_name = "unetformer-1024"
 log_name = "tof/{}".format(weights_name)
-monitor = "val_F1"
+monitor = "val_mIoU"
 monitor_mode = "max"
 save_top_k = 1
 save_last = True
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
-gpus =  "auto"#[1, 2, 3] #  default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
+gpus = "auto"  # [1, 2, 3] #  default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
-net = UNetFormer(num_classes=num_classes, dropout=0.5)
+net = UNetFormer(num_classes=num_classes, dropout=0.1)
 
 # define the loss
 loss = UnetFormerLoss(ignore_index=ignore_index)
