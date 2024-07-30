@@ -190,6 +190,7 @@ def main():
     args = get_args()
     config = py2cfg(args.config_path)
     seed_everything(42)
+    torch.set_float32_matmul_precision("medium")
 
     checkpoint_callback = ModelCheckpoint(
         save_top_k=config.save_top_k,
