@@ -237,7 +237,7 @@ python GeoSeg/tools/loveda_mask_convert.py --mask-dir data/LoveDA/Val/Urban/mask
 "-c" means the path of the config, use different **config** to train different models.
 
 ```
-python GeoSeg/train_supervision.py -c GeoSeg/config/uavid/unetformer.py
+python GeoSeg/train_supervision.py -c GeoSeg/config/tof/unetformer.py
 ```
 
 ## Testing
@@ -249,6 +249,12 @@ python GeoSeg/train_supervision.py -c GeoSeg/config/uavid/unetformer.py
 "-t" denotes the test time augmentation (TTA), can be [None, 'lr', 'd4'], default is None, 'lr' is flip TTA, 'd4' is multiscale TTA
 
 "--rgb" denotes whether to output masks in RGB format
+
+**TOF**
+
+```
+python GeoSeg/tof_test.py -c GeoSeg/config/tof/unetformer.py -o fig_results/tof/unetformer --rgb
+```
 
 **Vaihingen**
 ```
