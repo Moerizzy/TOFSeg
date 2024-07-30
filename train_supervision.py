@@ -96,15 +96,15 @@ class Supervision_Train(pl.LightningModule):
         OA = np.nanmean(self.metrics_train.OA())
         iou_per_class = self.metrics_train.Intersection_over_Union()
         eval_value = {"mIoU": mIoU, "F1": F1, "OA": OA}
-        print("train:", eval_value)
+        # print("train:", eval_value)
 
         iou_value = {}
         for class_name, iou in zip(self.config.classes, iou_per_class):
             iou_value[class_name] = iou
-        print(iou_value)
+        # print(iou_value)
         self.metrics_train.reset()
         log_dict = {"train_mIoU": mIoU, "train_F1": F1, "train_OA": OA}
-        self.log_dict(log_dict, prog_bar=True, sync_dist=True)
+        self.log_dict(log_dict, prog_bar=False, sync_dist=True)
 
     def validation_step(self, batch, batch_idx):
         img, mask = batch["img"], batch["gt_semantic_seg"]
@@ -115,6 +115,15 @@ class Supervision_Train(pl.LightningModule):
             self.metrics_val.add_batch(mask[i].cpu().numpy(), pre_mask[i].cpu().numpy())
 
         loss_val = self.loss(prediction, mask)
+        self.log(
+            "val_loss",
+            loss_val,
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+        )
+
         return {"loss_val": loss_val}
 
     def on_validation_epoch_end(self):
@@ -141,15 +150,20 @@ class Supervision_Train(pl.LightningModule):
         iou_per_class = self.metrics_val.Intersection_over_Union()
 
         eval_value = {"mIoU": mIoU, "F1": F1, "OA": OA}
-        print("val:", eval_value)
+        # print("val:", eval_value)
         iou_value = {}
         for class_name, iou in zip(self.config.classes, iou_per_class):
             iou_value[class_name] = iou
-        print(iou_value)
+        # print(iou_value)
 
         self.metrics_val.reset()
         log_dict = {"val_mIoU": mIoU, "val_F1": F1, "val_OA": OA}
-        self.log_dict(log_dict, prog_bar=True, sync_dist=True)
+
+        # Add class-specific IoU values to log_dict
+        for class_name, iou in iou_value.items():
+            log_dict[f"val_IoU_{class_name}"] = iou
+
+        self.log_dict(log_dict, prog_bar=False, sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = self.config.optimizer
