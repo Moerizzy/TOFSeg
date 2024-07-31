@@ -44,7 +44,7 @@ train_dataset = TOFDataset(
 )
 
 val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug)
-test_dataset = TOFDataset(data_root="data/tof/test", transform=val_aug, mode="test")
+test_dataset = TOFDataset(data_root="data/tof/test_big", transform=val_aug, mode="test")
 
 train_loader = DataLoader(
     dataset=train_dataset,
