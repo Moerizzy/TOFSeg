@@ -57,30 +57,57 @@ def main() -> None:
     cf_avg = np.mean(cf_list, axis=0)
     print("Average Distribution:", cf_avg)
 
-    # Choose 5 masks with similar distribution as the average
-    mask_paths_selected = []
-    cf_avg_select = np.zeros(num_classes - 1)
-    while not np.allclose(cf_avg, cf_avg_select, atol=0.01):
+    # Choose 5 Validation Masks with similar distribution as the average
+    mask_paths_selected_val = []
+    cf_avg_select_val = np.zeros(num_classes - 1)
+    while not np.allclose(cf_avg, cf_avg_select_val, atol=0.01):
         cf_list = []
-        mask_paths_selected = []
-        for _ in range(5):
+        mask_paths_selected_val = []
+        while len(mask_paths_selected_val) < 5:
             mask_path = np.random.choice(mask_paths)
-            mask_paths_selected.append(mask_path)
-            cf = get_statistics(str(mask_path), num_classes)
-            cf_list.append(cf)
+            if mask_path not in mask_paths_selected_val:
+                mask_paths_selected_val.append(mask_path)
+                cf = get_statistics(str(mask_path), num_classes)
+                cf_list.append(cf)
         cf_list = np.array(cf_list)
-        cf_avg_select = np.mean(cf_list, axis=0)
+        cf_avg_select_val = np.mean(cf_list, axis=0)
 
-    print("Average Distribution Selected Masks:", cf_avg_select)
-    print("Selected masks:", mask_paths_selected)
+    print("Average Distribution Selected Validation Masks:", cf_avg_select_val)
+    print("Selected Validation Masks:", mask_paths_selected_val)
+
+    # Choose 5 Testing Masks with similar distribution as the average but not part of the validation set
+    mask_paths_test = [file for file in masks_dir.iterdir() if file.suffix == ".tif"]
+    mask_paths_test = [
+        file for file in mask_paths_test if file not in mask_paths_selected_val
+    ]
+    # Choose 5 Validation Masks with similar distribution as the average
+    mask_paths_selected_test = []
+    cf_avg_select_test = np.zeros(num_classes - 1)
+    while not np.allclose(cf_avg, cf_avg_select_test, atol=0.01):
+        cf_list = []
+        mask_paths_selected_test = []
+        while len(mask_paths_selected_test) < 5:
+            mask_path = np.random.choice(mask_paths)
+            if mask_path not in mask_paths_selected_test:
+                mask_paths_selected_test.append(mask_path)
+                cf = get_statistics(str(mask_path), num_classes)
+                cf_list.append(cf)
+        cf_list = np.array(cf_list)
+        cf_avg_select_test = np.mean(cf_list, axis=0)
+
+    print("Average Distribution Selected Testing Masks:", cf_avg_select_test)
+    print("Selected Testing Masks:", mask_paths_selected_test)
 
     # Save average distribution and selected masks and their distributions
     stats_dir = Path(f"data/sites/{state}/Stats")
     stats_dir.mkdir(parents=True, exist_ok=True)
     np.savetxt(stats_dir / "average_distribution.txt", cf_avg)
-    np.savetxt(stats_dir / "selected_masks.txt", mask_paths_selected, fmt="%s")
-    np.savetxt(stats_dir / "selected_masks_distribution.txt", cf_list, fmt="%s")
-    np.savetxt(stats_dir / "average_distribution_selected_masks.txt", cf_avg_select)
+    np.savetxt(stats_dir / "selected_masks_val.txt", mask_paths_selected_val, fmt="%s")
+    np.savetxt(stats_dir / "selected_masks_distribution_val.txt", cf_avg_select_val)
+    np.savetxt(
+        stats_dir / "selected_masks_test.txt", mask_paths_selected_test, fmt="%s"
+    )
+    np.savetxt(stats_dir / "selected_masks_distribution_test.txt", cf_avg_select_test)
 
 
 if __name__ == "__main__":
