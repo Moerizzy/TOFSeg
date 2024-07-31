@@ -9,7 +9,7 @@ from tools.utils import process_model_params
 max_epoch = 10
 ignore_index = len(CLASSES)
 train_batch_size = 32
-val_batch_size = 32
+val_batch_size = 2
 lr = 6e-4  # learning_rates = [1e-5, 3e-5, 1e-4, 3e-4, 6e-4, 1e-3, 3e-3, 1e-2, 3e-2]
 weight_decay = 0.01  # Typical range: 1e-4 to 1e-2
 backbone_lr = 6e-5
