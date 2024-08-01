@@ -40,7 +40,7 @@ Forest = np.array([255, 0, 0])  # label 1
 Patch = np.array([255, 255, 0])  # label 2
 Linear = np.array([0, 255, 0])  # label 3
 Tree = np.array([0, 255, 255])  # label 4
-num_classes = 4
+num_classes = 5
 
 
 # split huge RS image to small patches
@@ -188,8 +188,8 @@ def randomsizedcrop(image, mask):
     return img_crop, mask_crop
 
 
-def car_aug(image, mask):
-    assert image.shape[:2] == mask.shape
+def tof_aug(image, mask):
+    assert image.shape == mask.shape
     v_flip = albu.VerticalFlip(p=1.0)(image=image.copy(), mask=mask.copy())
     h_flip = albu.HorizontalFlip(p=1.0)(image=image.copy(), mask=mask.copy())
     rotate_90 = albu.RandomRotate90(p=1.0)(image=image.copy(), mask=mask.copy())
@@ -277,11 +277,11 @@ def tof_format(inp):
                 ):
                     image_crop, mask_crop = randomsizedcrop(img_tile, mask_tile)
                     bins = np.array(range(num_classes + 1))
-                    class_pixel_counts, _ = np.histogram(mask_crop, bins=bins)
+                    class_pixel_counts, _ = np.histogram(mask_crop[:, :, 0], bins=bins)
                     cf = class_pixel_counts / (mask_crop.shape[0] * mask_crop.shape[1])
                     # this can be used to oversample classes like the tof classes
-                    if False:  # cf[4] > 0.1 and mode == "train":
-                        car_imgs, car_masks = car_aug(image_crop, mask_crop)
+                    if (cf[2] > 0.1 or cf[3] > 0.1 or cf[4] > 0.1) and mode == "train":
+                        car_imgs, car_masks = tof_aug(image_crop, mask_crop)
                         for i in range(len(car_imgs)):
                             out_img_path = os.path.join(
                                 imgs_output_dir,
