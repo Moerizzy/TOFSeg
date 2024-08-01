@@ -17,9 +17,9 @@ backbone_weight_decay = 0.01
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "unetformer-r18-1024-nomosaic"
+weights_name = "unetformer-r18-1024-oversamples"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer-r18-1024-nomosaic"
+test_weights_name = "unetformer-r18-1024-oversamples"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_mIoU"
 monitor_mode = "max"
@@ -40,11 +40,14 @@ use_aux_loss = True
 # define the dataloader
 
 train_dataset = TOFDataset(
-    data_root="data/tof/train", mode="train", transform=train_aug, mosaic_ratio=0.25
+    data_root="data/tof/train_over",
+    mode="train",
+    transform=train_aug,
+    mosaic_ratio=0.25,
 )
 
 val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug)
-test_dataset = TOFDataset(data_root="data/tof/test_big", transform=val_aug, mode="test")
+test_dataset = TOFDataset(data_root="data/tof/test", transform=val_aug, mode="test")
 
 train_loader = DataLoader(
     dataset=train_dataset,
