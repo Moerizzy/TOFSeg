@@ -9,7 +9,7 @@ from tools.utils import process_model_params
 max_epoch = 10
 ignore_index = len(CLASSES)
 train_batch_size = 16
-val_batch_size = 2
+val_batch_size = 16
 lr = 6e-4  # learning_rates = [1e-5, 3e-5, 1e-4, 3e-4, 6e-4, 1e-3, 3e-3, 1e-2, 3e-2]
 weight_decay = 0.01  # Typical range: 1e-4 to 1e-2
 backbone_lr = 6e-5
@@ -58,7 +58,7 @@ test_dataset = TOFDataset(
 train_loader = DataLoader(
     dataset=train_dataset,
     batch_size=train_batch_size,
-    num_workers=16,
+    num_workers=8,
     pin_memory=True,
     shuffle=True,
     drop_last=True,
@@ -67,7 +67,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=16,
+    num_workers=8,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
