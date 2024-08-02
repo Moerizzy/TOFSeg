@@ -22,7 +22,7 @@ TEST_IMG_SIZE = (4096, 4096)
 
 def get_training_transform():
     train_transform = [
-        albu.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=0.8),
+        albu.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=0.5),
         albu.HorizontalFlip(p=0.5),
         albu.VerticalFlip(p=0.5),
         albu.CoarseDropout(
@@ -34,15 +34,15 @@ def get_training_transform():
 
 
 def train_aug(img, mask):
-    crop_aug = Compose(
-        [
-            RandomScale(scale_list=[0.5, 0.75, 1.0, 1.25, 1.5], mode="value"),
-            SmartCropV1(
-                crop_size=512, max_ratio=0.75, ignore_index=len(CLASSES), nopad=False
-            ),
-        ]
-    )
-    img, mask = crop_aug(img, mask)
+    # crop_aug = Compose(
+    #     [
+    #         RandomScale(scale_list=[0.5, 0.75, 1.0, 1.25, 1.5], mode="value"),
+    #         SmartCropV1(
+    #             crop_size=512, max_ratio=0.75, ignore_index=len(CLASSES), nopad=False
+    #         ),
+    #     ]
+    # )
+    # img, mask = crop_aug(img, mask)
     img, mask = np.array(img), np.array(mask)
     aug = get_training_transform()(image=img.copy(), mask=mask.copy())
     img, mask = aug["image"], aug["mask"]
