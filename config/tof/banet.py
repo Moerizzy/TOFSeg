@@ -17,9 +17,9 @@ backbone_weight_decay = 0.01
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "abcnet-r18-512-crop-ms-e105"
+weights_name = "banet"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "abcnet-r18-512-crop-ms-e105"
+test_weights_name = "banet"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"

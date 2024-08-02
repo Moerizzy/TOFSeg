@@ -26,9 +26,9 @@ def get_training_transform():
         albu.HorizontalFlip(p=0.5),
         albu.VerticalFlip(p=0.5),
         albu.RandomRotate90(p=0.5),
-        # albu.CoarseDropout(
-        #     max_holes=8, max_height=128, max_width=128, fill_value=0, p=0.5
-        # ),
+        albu.CoarseDropout(
+            max_holes=8, max_height=128, max_width=128, fill_value=0, p=0.5
+        ),
         albu.Normalize(),
     ]
     return albu.Compose(train_transform)
