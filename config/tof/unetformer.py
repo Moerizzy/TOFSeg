@@ -6,10 +6,10 @@ from tools.utils import Lookahead
 from tools.utils import process_model_params
 
 # training hparam
-max_epoch = 10
+max_epoch = 20
 ignore_index = len(CLASSES)
 train_batch_size = 32
-val_batch_size = 32
+val_batch_size = 2
 lr = 6e-4  # learning_rates = [1e-5, 3e-5, 1e-4, 3e-4, 6e-4, 1e-3, 3e-3, 1e-2, 3e-2]
 weight_decay = 0.01  # Typical range: 1e-4 to 1e-2
 backbone_lr = 6e-5
@@ -17,14 +17,14 @@ backbone_weight_decay = 0.01
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "unetformer-r18-1024"
+weights_name = "unetformer"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer-r18-1024"
+test_weights_name = "unetformer"
 log_name = "tof/{}".format(weights_name)
-monitor = "val_mIoU"
+monitor = "val_F1"
 monitor_mode = "max"
 save_top_k = 1
-save_last = True
+save_last = False
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
 gpus = "auto"  # [1, 2, 3] #  default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
