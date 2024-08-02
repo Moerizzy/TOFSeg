@@ -40,7 +40,7 @@ use_aux_loss = True
 # define the dataloader
 
 train_dataset = TOFDataset(
-    data_root="data/tof/train_over",
+    data_root="data/tof/train",
     mode="train",
     transform=train_aug,
     mosaic_ratio=0.25,
