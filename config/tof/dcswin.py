@@ -6,10 +6,10 @@ from tools.utils import Lookahead
 from tools.utils import process_model_params
 
 # training hparam
-max_epoch = 70
+max_epoch = 20
 ignore_index = len(CLASSES)
-train_batch_size = 8
-val_batch_size = 4
+train_batch_size = 32
+val_batch_size = 2
 lr = 1e-3
 weight_decay = 2.5e-4
 backbone_lr = 1e-4
@@ -18,9 +18,9 @@ accumulate_n = 1
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "dcswin-small-1024-ms-512crop-e70"
+weights_name = "dcswin"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "dcswin-small-1024-ms-512crop-e70"
+test_weights_name = "dcswin"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
@@ -45,51 +45,57 @@ loss = JointLoss(
 use_aux_loss = False
 
 
-# define the dataloader
-def get_training_transform():
-    train_transform = [albu.RandomRotate90(p=0.5), albu.Normalize()]
-    return albu.Compose(train_transform)
+# # define the dataloader
+# def get_training_transform():
+#     train_transform = [albu.RandomRotate90(p=0.5), albu.Normalize()]
+#     return albu.Compose(train_transform)
 
 
-def train_aug(img, mask):
-    crop_aug = Compose(
-        [
-            RandomScale(scale_list=[0.5, 0.75, 1.0, 1.25, 1.5], mode="value"),
-            SmartCropV1(
-                crop_size=512, max_ratio=0.75, ignore_index=len(CLASSES), nopad=False
-            ),
-        ]
-    )
-    img, mask = crop_aug(img, mask)
-    img, mask = np.array(img), np.array(mask)
-    aug = get_training_transform()(image=img.copy(), mask=mask.copy())
-    img, mask = aug["image"], aug["mask"]
-    return img, mask
+# def train_aug(img, mask):
+#     crop_aug = Compose(
+#         [
+#             RandomScale(scale_list=[0.5, 0.75, 1.0, 1.25, 1.5], mode="value"),
+#             SmartCropV1(
+#                 crop_size=512, max_ratio=0.75, ignore_index=len(CLASSES), nopad=False
+#             ),
+#         ]
+#     )
+#     img, mask = crop_aug(img, mask)
+#     img, mask = np.array(img), np.array(mask)
+#     aug = get_training_transform()(image=img.copy(), mask=mask.copy())
+#     img, mask = aug["image"], aug["mask"]
+#     return img, mask
 
 
-def get_val_transform():
-    val_transform = [albu.Normalize()]
-    return albu.Compose(val_transform)
+# def get_val_transform():
+#     val_transform = [albu.Normalize()]
+#     return albu.Compose(val_transform)
 
 
-def val_aug(img, mask):
-    img, mask = np.array(img), np.array(mask)
-    aug = get_val_transform()(image=img.copy(), mask=mask.copy())
-    img, mask = aug["image"], aug["mask"]
-    return img, mask
+# def val_aug(img, mask):
+#     img, mask = np.array(img), np.array(mask)
+#     aug = get_val_transform()(image=img.copy(), mask=mask.copy())
+#     img, mask = aug["image"], aug["mask"]
+#     return img, mask
 
 
 train_dataset = TOFDataset(
     data_root="data/TOF/train", mode="train", mosaic_ratio=0.25, transform=train_aug
 )
 
-val_dataset = TOFDataset(transform=val_aug)
-test_dataset = TOFDataset(data_root="data/tof/test", transform=val_aug)
+val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug)
+test_dataset = TOFDataset(
+    data_root="data/tof/test",
+    transform=val_aug,
+    mode="test",
+    img_dir="images_4096",
+    mask_dir="masks_4096",
+)
 
 train_loader = DataLoader(
     dataset=train_dataset,
     batch_size=train_batch_size,
-    num_workers=4,
+    num_workers=16,
     pin_memory=True,
     shuffle=True,
     drop_last=True,
@@ -98,7 +104,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=4,
+    num_workers=16,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
