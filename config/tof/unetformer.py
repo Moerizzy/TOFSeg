@@ -17,9 +17,9 @@ backbone_weight_decay = 0.01
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "unetformer-r18-1024-oversamples"
+weights_name = "unetformer-r18-1024-aug"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer-r18-1024-oversamples"
+test_weights_name = "unetformer-r18-1024-aug"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_mIoU"
 monitor_mode = "max"
