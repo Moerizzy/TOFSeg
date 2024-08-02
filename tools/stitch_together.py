@@ -82,9 +82,7 @@ def main(input_path):
         os.makedirs(output_folder, exist_ok=True)
         output_path = os.path.join(output_folder, f"{identifier}.png")
 
-        geospatial_path = os.path.join(
-            "data/tof/test_masks_server", f"mask_{identifier}.tif"
-        )
+        geospatial_path = os.path.join("data/tof/test", f"mask_{identifier}.tif")
         stitch_images_grid(images, geospatial_path, output_path)
         print(f"Stitched image saved as {output_path}")
 
