@@ -9,7 +9,7 @@ from tools.utils import process_model_params
 max_epoch = 20
 ignore_index = len(CLASSES)
 train_batch_size = 16
-val_batch_size = 2
+val_batch_size = 16
 lr = 6e-4  # learning_rates = [1e-5, 3e-5, 1e-4, 3e-4, 6e-4, 1e-3, 3e-3, 1e-2, 3e-2]
 weight_decay = 0.01  # Typical range: 1e-4 to 1e-2
 backbone_lr = 6e-5
@@ -19,7 +19,7 @@ classes = CLASSES
 
 weights_name = "unetformer"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer"
+test_weights_name = "unetformer-v1"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"

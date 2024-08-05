@@ -9,7 +9,7 @@ from tools.utils import process_model_params
 max_epoch = 20
 ignore_index = len(CLASSES)
 train_batch_size = 16
-val_batch_size = 2
+val_batch_size = 16
 lr = 1e-3
 weight_decay = 2.5e-4
 backbone_lr = 1e-4
