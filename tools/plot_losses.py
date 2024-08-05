@@ -2,8 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load data from the CSV file
-# df = pd.read_csv("lightning_logs/tof/dcswin/metrics.csv")
-df = pd.read_csv("lightning_logs/tof/unetformer/metrics.csv")
+df_dcswin = pd.read_csv("lightning_logs/tof/dcswin/metrics.csv")
+df_banet = pd.read_csv("lightning_logs/tof/banet/metrics.csv")
+df_unetformer = pd.read_csv("lightning_logs/tof/unetformer/metrics.csv")
+df_ftunetformer = pd.read_csv("lightning_logs/tof/ftunetformer/metrics.csv")
+df_a2fpn = pd.read_csv("lightning_logs/tof/a2fpn/metrics.csv")
+
+df = df_a2fpn
 
 
 # Define a function to calculate the running mean
@@ -18,7 +23,7 @@ df["val_loss_rm"] = running_mean(df["val_loss"], window_size=15)
 
 # Function to plot the metrics
 def plot_metrics(df, x, metrics):
-    plt.figure(figsize=(15, 10))
+    plt.figure(figsize=(10, 7))
 
     max_val_f1_epoch = df[df["val_F1"] == df["val_F1"].max()][x].values[0]
 
