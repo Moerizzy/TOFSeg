@@ -77,7 +77,7 @@ val_loader = DataLoader(
     batch_size=val_batch_size,
     num_workers=2,
     shuffle=False,
-    pin_memory=True,
+    pin_memory=False,
     drop_last=False,
 )
 
