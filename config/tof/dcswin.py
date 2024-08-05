@@ -9,7 +9,7 @@ from tools.utils import process_model_params
 max_epoch = 20
 ignore_index = len(CLASSES)
 train_batch_size = 16
-val_batch_size = 16
+val_batch_size = 4
 lr = 1e-3
 weight_decay = 2.5e-4
 backbone_lr = 1e-4
@@ -28,9 +28,7 @@ save_top_k = 1
 save_last = False
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
-gpus = [
-    1
-]  # "auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
+gpus = "auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
@@ -106,7 +104,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=16,
+    num_workers=4,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
