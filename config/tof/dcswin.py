@@ -20,7 +20,7 @@ classes = CLASSES
 
 weights_name = "dcswin"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "dcswin"
+test_weights_name = "dcswin-v1"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
@@ -28,7 +28,9 @@ save_top_k = 1
 save_last = False
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
-gpus = "auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
+gpus = [
+    1
+]  # "auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer to pytorch_lightning
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
