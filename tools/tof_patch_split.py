@@ -275,35 +275,35 @@ def tof_format(inp):
                     and mask_tile.shape[0] == split_size
                     and mask_tile.shape[1] == split_size
                 ):
-                    image_crop, mask_crop = randomsizedcrop(img_tile, mask_tile)
-                    bins = np.array(range(num_classes + 1))
-                    class_pixel_counts, _ = np.histogram(mask_crop[:, :, 0], bins=bins)
-                    cf = class_pixel_counts / (mask_crop.shape[0] * mask_crop.shape[1])
+                    # image_crop, mask_crop = randomsizedcrop(img_tile, mask_tile)
+                    # bins = np.array(range(num_classes + 1))
+                    # class_pixel_counts, _ = np.histogram(mask_crop[:, :, 0], bins=bins)
+                    # cf = class_pixel_counts / (mask_crop.shape[0] * mask_crop.shape[1])
                     # this can be used to oversample classes like the tof classes
-                    if (cf[2] > 0.1 or cf[3] > 0.1 or cf[4] > 0.1) and mode == "train":
-                        car_imgs, car_masks = tof_aug(image_crop, mask_crop)
-                        for i in range(len(car_imgs)):
-                            out_img_path = os.path.join(
-                                imgs_output_dir,
-                                "{}_{}_{}_{}.tif".format(img_filename, m, k, i),
-                            )
-                            cv2.imwrite(out_img_path, car_imgs[i])
+                    # if (cf[2] > 0.1 or cf[3] > 0.1 or cf[4] > 0.1) and mode == "train":
+                    # #     car_imgs, car_masks = tof_aug(image_crop, mask_crop)
+                    # #     for i in range(len(car_imgs)):
+                    # #         out_img_path = os.path.join(
+                    # #             imgs_output_dir,
+                    # #             "{}_{}_{}_{}.tif".format(img_filename, m, k, i),
+                    # #         )
+                    # #         cv2.imwrite(out_img_path, car_imgs[i])
 
-                            out_mask_path = os.path.join(
-                                masks_output_dir,
-                                "{}_{}_{}_{}.png".format(mask_filename, m, k, i),
-                            )
-                            cv2.imwrite(out_mask_path, car_masks[i])
-                    else:
-                        out_img_path = os.path.join(
-                            imgs_output_dir, "{}_{}_{}.tif".format(img_filename, m, k)
-                        )
-                        cv2.imwrite(out_img_path, img_tile)
+                    # #         out_mask_path = os.path.join(
+                    # #             masks_output_dir,
+                    # #             "{}_{}_{}_{}.png".format(mask_filename, m, k, i),
+                    # #         )
+                    # #         cv2.imwrite(out_mask_path, car_masks[i])
+                    # else:
+                    out_img_path = os.path.join(
+                        imgs_output_dir, "{}_{}_{}.tif".format(img_filename, m, k)
+                    )
+                    cv2.imwrite(out_img_path, img_tile)
 
-                        out_mask_path = os.path.join(
-                            masks_output_dir, "{}_{}_{}.png".format(mask_filename, m, k)
-                        )
-                        cv2.imwrite(out_mask_path, mask_tile)
+                    out_mask_path = os.path.join(
+                        masks_output_dir, "{}_{}_{}.png".format(mask_filename, m, k)
+                    )
+                    cv2.imwrite(out_mask_path, mask_tile)
 
                 k += 1
 
