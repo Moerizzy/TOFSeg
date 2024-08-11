@@ -15,9 +15,9 @@ from .transform import *
 CLASSES = ("Background", "Forest", "Patch", "Linear", "Tree")
 PALETTE = [[255, 255, 255], [0, 0, 255], [0, 255, 255], [0, 255, 0], [255, 204, 0]]
 
-ORIGIN_IMG_SIZE = (1024, 1024)
-INPUT_IMG_SIZE = (1024, 1024)
-TEST_IMG_SIZE = (5000, 5000)
+ORIGIN_IMG_SIZE = (2048, 2048)
+INPUT_IMG_SIZE = (2048, 2048)
+TEST_IMG_SIZE = (1024, 1024)  # TODO
 
 
 def get_training_transform():
@@ -67,8 +67,8 @@ class TOFDataset(Dataset):
         self,
         data_root="data/tof/test",
         mode="val",
-        img_dir="images_1024",
-        mask_dir="masks_1024",
+        img_dir="images_2048",
+        mask_dir="masks_2048",
         img_suffix=".tif",
         mask_suffix=".png",
         transform=val_aug,
