@@ -54,8 +54,8 @@ test_dataset = TOFDataset(
     data_root="data/tof/test",
     transform=val_aug,
     mode="test",
-    img_dir="images_5000",
-    mask_dir="masks_5000",
+    img_dir="images_8192",
+    mask_dir="masks_8192",
 )
 
 train_loader = DataLoader(
