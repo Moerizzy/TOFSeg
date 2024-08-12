@@ -12,6 +12,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from collections import OrderedDict
 
 
 def seed_everything(seed):
@@ -71,6 +72,95 @@ def get_args():
     return parser.parse_args()
 
 
+def sliding_window_inference(model, image, num_classes, window_size=2048, stride=128):
+    _, _, H, W = image.shape
+    pad_h = (window_size - H % window_size) % window_size
+    pad_w = (window_size - W % window_size) % window_size
+    image = nn.functional.pad(image, (0, pad_w, 0, pad_h), mode="reflect")
+    _, _, padded_H, padded_W = image.shape
+
+    # Initialize prediction tensor with the correct number of classes
+    prediction = torch.zeros(
+        (image.shape[0], num_classes, padded_H, padded_W), device=image.device
+    )
+    count = torch.zeros((1, 1, padded_H, padded_W), device=image.device)
+
+    for h in range(0, padded_H - window_size + 1, stride):
+        for w in range(0, padded_W - window_size + 1, stride):
+            window = image[:, :, h : h + window_size, w : w + window_size]
+            with torch.no_grad():
+                output = model(window)
+            prediction[:, :, h : h + window_size, w : w + window_size] += output
+            count[:, :, h : h + window_size, w : w + window_size] += 1
+
+    prediction /= count
+    prediction = prediction[:, :, :H, :W]  # Remove padding
+    return prediction
+
+
+def calculate_and_save_metrics(evaluator, config, output_file):
+    metrics = OrderedDict()
+
+    iou_per_class = evaluator.Intersection_over_Union()
+    f1_per_class = evaluator.F1()
+    precision_per_class = evaluator.Precision()
+    recall_per_class = evaluator.Recall()
+    dice_per_class = evaluator.Dice()
+    OA = evaluator.OA()
+
+    # Per-class metrics
+    for (
+        class_name,
+        class_iou,
+        class_f1,
+        class_precision,
+        class_recall,
+        class_dice,
+    ) in zip(
+        config.classes,
+        iou_per_class,
+        f1_per_class,
+        precision_per_class,
+        recall_per_class,
+        dice_per_class,
+    ):
+        metrics[class_name] = {
+            "IoU": float(class_iou),
+            "F1": float(class_f1),
+            "Precision": float(class_precision),
+            "Recall": float(class_recall),
+            "Dice": float(class_dice),
+        }
+        print(f"{class_name}: F1={class_f1:.4f}, IoU={class_iou:.4f}")
+
+    # Mean metrics (excluding background class if it's the last one)
+    metrics["Mean"] = {
+        "mIoU": float(np.nanmean(iou_per_class[:-1])),
+        "mF1": float(np.nanmean(f1_per_class[:-1])),
+        "mPrecision": float(np.nanmean(precision_per_class[:-1])),
+        "mRecall": float(np.nanmean(recall_per_class[:-1])),
+        "mDice": float(np.nanmean(dice_per_class[:-1])),
+    }
+
+    # Overall Accuracy
+    metrics["Overall_Accuracy"] = float(OA)
+
+    # Print mean metrics
+    print(f"Mean metrics (excluding background):")
+    print(f"mIoU: {metrics['Mean']['mIoU']:.4f}")
+    print(f"mF1: {metrics['Mean']['mF1']:.4f}")
+    print(f"mPrecision: {metrics['Mean']['mPrecision']:.4f}")
+    print(f"mRecall: {metrics['Mean']['mRecall']:.4f}")
+    print(f"mDice: {metrics['Mean']['mDice']:.4f}")
+    print(f"Overall Accuracy: {metrics['Overall_Accuracy']:.4f}")
+
+    # Save metrics to file
+    with open(output_file, "w") as f:
+        json.dump(metrics, f, indent=4)
+
+    print(f"Metrics saved to {output_file}")
+
+
 def main():
     seed_everything(42)
     args = get_args()
@@ -114,16 +204,21 @@ def main():
         )
         results = []
         for input in tqdm(test_loader):
-            # raw_prediction NxCxHxW
-            raw_predictions = model(input["img"].cuda())
 
+            image = input["img"].cuda()
             image_ids = input["img_id"]
             masks_true = input["gt_semantic_seg"]
 
-            raw_predictions = nn.Softmax(dim=1)(raw_predictions)
-            predictions = raw_predictions.argmax(dim=1)
+            # Perform sliding window inference
+            raw_predictions = sliding_window_inference(model, image, config.num_classes)
 
-            for i in range(raw_predictions.shape[0]):
+            # Apply softmax to get class probabilities
+            class_probabilities = nn.Softmax(dim=1)(raw_predictions)
+
+            # Get final predictions (class with highest probability for each pixel)
+            predictions = class_probabilities.argmax(dim=1)
+
+            for i in range(predictions.shape[0]):
                 mask = predictions[i].cpu().numpy()
                 evaluator.add_batch(
                     pre_image=mask, gt_image=masks_true[i].cpu().numpy()
@@ -131,18 +226,43 @@ def main():
                 mask_name = image_ids[i]
                 results.append((mask, str(args.output_path / mask_name), args.rgb))
 
-    iou_per_class = evaluator.Intersection_over_Union()
-    f1_per_class = evaluator.F1()
-    OA = evaluator.OA()
-    for class_name, class_iou, class_f1 in zip(
-        config.classes, iou_per_class, f1_per_class
-    ):
-        print("F1_{}:{}, IOU_{}:{}".format(class_name, class_f1, class_name, class_iou))
-    print(
-        "F1:{}, mIOU:{}, OA:{}".format(
-            np.nanmean(f1_per_class[:-1]), np.nanmean(iou_per_class[:-1]), OA
-        )
-    )
+            # If you need to keep the probabilities for each class:
+            # class_probabilities_np = class_probabilities.cpu().numpy()
+            # You can then use class_probabilities_np for further analysis or storage
+
+            # # raw_prediction NxCxHxW
+            # raw_predictions = model(input["img"].cuda())
+
+            # image_ids = input["img_id"]
+            # masks_true = input["gt_semantic_seg"]
+
+            # raw_predictions = nn.Softmax(dim=1)(raw_predictions)
+            # predictions = raw_predictions.argmax(dim=1)
+
+            # for i in range(raw_predictions.shape[0]):
+            #     mask = predictions[i].cpu().numpy()
+            #     evaluator.add_batch(
+            #         pre_image=mask, gt_image=masks_true[i].cpu().numpy()
+            #     )
+            #     mask_name = image_ids[i]
+            #     results.append((mask, str(args.output_path / mask_name), args.rgb))
+
+    # iou_per_class = evaluator.Intersection_over_Union()
+    # f1_per_class = evaluator.F1()
+    # precision_per_class = evaluator.Precision()
+    # recall_per_class = evaluator.Recall()
+    # dice_per_class = evaluator.Dice()
+    # OA = evaluator.OA()
+    # for class_name, class_iou, class_f1 in zip(
+    #     config.classes, iou_per_class, f1_per_class
+    # ):
+    #     print("F1_{}:{}, IOU_{}:{}".format(class_name, class_f1, class_name, class_iou))
+    # print(
+    #     "F1:{}, mIOU:{}, OA:{}".format(
+    #         np.nanmean(f1_per_class[:-1]), np.nanmean(iou_per_class[:-1]), OA
+    #     )
+    # )
+    calculate_and_save_metrics(evaluator, config, args.output_path / "metrics.json")
     t0 = time.time()
     mpp.Pool(processes=mp.cpu_count()).map(img_writer, results)
     t1 = time.time()

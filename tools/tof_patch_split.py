@@ -269,8 +269,6 @@ def tof_format(inp):
                 img_tile = img[y : y + split_size, x : x + split_size]
                 mask_tile = mask[y : y + split_size, x : x + split_size]
                 mask_tile[np.all(mask_tile == [0, 0, 6], axis=-1)] = [0, 0, 0]
-                # print if the tile has the value of 6
-                print(np.unique(mask_tile))
                 if (
                     img_tile.shape[0] == split_size
                     and img_tile.shape[1] == split_size
