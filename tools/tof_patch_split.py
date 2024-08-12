@@ -232,7 +232,7 @@ def tof_format(inp):
         mask_array = tifffile.imread(mask_path)
         # Convert the NumPy array to a PIL Image object
         img = Image.fromarray(img_array).convert("RGB")
-        mask = Image.fromarray(mask_array)  # TODO
+        mask = Image.fromarray(mask_array).convert("RGB")  # TODO
         # img = Image.open(img_path).convert("RGB")
         # mask = Image.open(mask_path).convert("RGB")
     except:
