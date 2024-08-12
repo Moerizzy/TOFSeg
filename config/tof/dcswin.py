@@ -20,7 +20,7 @@ classes = CLASSES
 
 weights_name = "dcswin"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "dcswin-v6"
+test_weights_name = "dcswin-v2"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
