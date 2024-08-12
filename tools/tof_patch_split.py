@@ -268,6 +268,7 @@ def tof_format(inp):
             for x in range(0, img.shape[1], stride):
                 img_tile = img[y : y + split_size, x : x + split_size]
                 mask_tile = mask[y : y + split_size, x : x + split_size]
+                mask_tile[np.all(mask_tile == [6, 6, 6], axis=-1)] = [0, 0, 0]
 
                 if (
                     img_tile.shape[0] == split_size
