@@ -17,7 +17,7 @@ PALETTE = [[255, 255, 255], [0, 0, 255], [0, 255, 255], [0, 255, 0], [255, 204, 
 
 ORIGIN_IMG_SIZE = (2048, 2048)
 INPUT_IMG_SIZE = (2048, 2048)
-TEST_IMG_SIZE = (1024, 1024)  # TODO
+TEST_IMG_SIZE = (2048, 2048)
 
 
 def get_training_transform():
