@@ -26,14 +26,10 @@ def stitch_images_grid(image_group, geospatial_path, output_path):
     stitched_image = Image.new("L", (width, height))  # 'L' mode for grayscale
 
     # Arrange the images in the order: 0, 1, 2, 3
-    # for i, img in enumerate(images):
-    #     if i >= 4:
-    #         break
-    #     row = i // 2
-    #     col = i % 2
-    #     x_offset = col * max_width
-    #     y_offset = row * max_height
-    #     stitched_image.paste(img, (x_offset, y_offset))
+    for i, img in enumerate(images):
+        if i >= 1:
+            break
+        stitched_image.paste(img, (x_offset, y_offset))
 
     # Cut the padding from the stitched image
     # stitched_image = stitched_image.crop((0, 0, total_width, total_height))
