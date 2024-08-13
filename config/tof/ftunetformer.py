@@ -8,7 +8,7 @@ from tools.utils import process_model_params
 # training hparam
 max_epoch = 20
 ignore_index = len(CLASSES)
-train_batch_size = 8
+train_batch_size = 2
 val_batch_size = 2
 lr = 6e-4
 weight_decay = 2.5e-4
@@ -54,14 +54,14 @@ test_dataset = TOFDataset(
     data_root="data/tof/test",
     transform=val_aug,
     mode="test",
-    img_dir="images_8192",
-    mask_dir="masks_8192",
+    img_dir="images_5000",
+    mask_dir="masks_5000",
 )
 
 train_loader = DataLoader(
     dataset=train_dataset,
     batch_size=train_batch_size,
-    num_workers=8,
+    num_workers=2,
     pin_memory=True,
     shuffle=True,
     drop_last=True,
@@ -70,7 +70,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=8,
+    num_workers=2,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
