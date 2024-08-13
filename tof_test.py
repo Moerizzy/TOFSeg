@@ -73,7 +73,7 @@ def get_args():
     return parser.parse_args()
 
 
-def sliding_window_inference(model, image, num_classes, window_size=2048, stride=128):
+def sliding_window_inference(model, image, num_classes, window_size=1024, stride=512):
     _, _, H, W = image.shape
     pad_h = (window_size - H % window_size) % window_size
     pad_w = (window_size - W % window_size) % window_size
