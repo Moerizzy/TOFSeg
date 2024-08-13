@@ -190,7 +190,7 @@ class Supervision_Train(pl.LightningModule):
 def main():
     args = get_args()
     config = py2cfg(args.config_path)
-    print(config)
+    print(config.weight_decay)
     seed_everything(42)
     torch.set_float32_matmul_precision("high")
 
