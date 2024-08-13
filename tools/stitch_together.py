@@ -14,8 +14,6 @@ def stitch_images_grid(image_group, geospatial_path, output_path):
     images = [Image.open(img) for img in image_group]
     widths, heights = zip(*(img.size for img in images))
 
-    print(widths, heights)
-
     # Determine the dimensions of the grid
     width = max(widths)
     height = max(heights)
@@ -38,7 +36,7 @@ def stitch_images_grid(image_group, geospatial_path, output_path):
     #     stitched_image.paste(img, (x_offset, y_offset))
 
     # Cut the padding from the stitched image
-    stitched_image = stitched_image.crop((0, 0, total_width, total_height))
+    # stitched_image = stitched_image.crop((0, 0, total_width, total_height))
 
     # Use the geospatial path to turn the stitched image into a geotiff
     stitched_image.save(output_path.replace(".png", ".tif"))
