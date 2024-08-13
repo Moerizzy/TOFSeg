@@ -45,7 +45,7 @@ train_dataset = TOFDataset(
     data_root="data/tof/train",
     mode="test",
     transform=train_aug,
-    mosaic_ratio=0.25,
+    #    mosaic_ratio=0.25,
 )
 
 val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug, mode="test")
@@ -60,7 +60,7 @@ test_dataset = TOFDataset(
 train_loader = DataLoader(
     dataset=train_dataset,
     batch_size=train_batch_size,
-    num_workers=16,
+    num_workers=2,
     pin_memory=True,
     shuffle=True,
     drop_last=True,
@@ -69,7 +69,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=16,
+    num_workers=2,
     shuffle=False,
     pin_memory=True,
     drop_last=False,

@@ -80,7 +80,7 @@ use_aux_loss = False
 
 
 train_dataset = TOFDataset(
-    data_root="data/tof/train", mode="test", mosaic_ratio=0.25, transform=train_aug
+    data_root="data/tof/train", mode="test", transform=train_aug  # mosaic_ratio=0.25,
 )
 
 val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug, mode="test")
