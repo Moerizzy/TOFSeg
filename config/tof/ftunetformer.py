@@ -46,10 +46,10 @@ use_aux_loss = False
 # define the dataloader
 
 train_dataset = TOFDataset(
-    data_root="data/tof/train", mode="train", mosaic_ratio=0.25, transform=train_aug
+    data_root="data/tof/train", mode="test", mosaic_ratio=0.25, transform=train_aug
 )
 
-val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug)
+val_dataset = TOFDataset(data_root="data/tof/val", transform=val_aug, mode="test")
 test_dataset = TOFDataset(
     data_root="data/tof/test",
     transform=val_aug,

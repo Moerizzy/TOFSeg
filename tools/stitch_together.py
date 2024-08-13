@@ -40,7 +40,7 @@ def stitch_images_grid(image_group, geospatial_path, output_path):
         stitched_image.paste(img, (x_offset, y_offset))
 
     # Cut the padding from the stitched image
-    stitched_image = stitched_image.crop((3192, 3192, total_width, total_height))
+    stitched_image = stitched_image.crop((0, 0, total_width, total_height))
 
     # Use the geospatial path to turn the stitched image into a geotiff
     stitched_image.save(output_path.replace(".png", ".tif"))
