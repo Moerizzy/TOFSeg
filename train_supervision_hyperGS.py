@@ -226,12 +226,21 @@ def main():
             for b_lr in backbone_lr_range:
                 for b_wd in backbone_weight_decay_range:
                     for bs in batch_size_range:
+
+                        print(f"Current hyperparameters:")
+                        print(f"Learning rate: {lr}")
+                        print(f"Weight decay: {wd}")
+                        print(f"Backbone learning rate: {b_lr}")
+                        print(f"Backbone weight decay: {b_wd}")
+                        print(f"Batch size: {bs}")
+
                         # Update config with current hyperparameters
-                        config.learning_rate = lr
+                        config.lr = lr
                         config.weight_decay = wd
                         config.backbone_lr = b_lr
                         config.backbone_weight_decay = b_wd
-                        config.batch_size = bs
+                        config.train_batch_size = bs
+                        config.val_batch_size = bs
 
                         model = Supervision_Train(config)
                         if config.pretrained_ckpt_path:
@@ -248,10 +257,6 @@ def main():
                             strategy="auto",
                             logger=logger,
                         )
-
-                        # Use Tuner to find the optimal batch size
-                        tuner = Tuner(trainer)
-                        tuner.scale_batch_size(model, mode="power")
 
                         # Train the model
                         trainer.fit(model=model, ckpt_path=config.resume_ckpt_path)
