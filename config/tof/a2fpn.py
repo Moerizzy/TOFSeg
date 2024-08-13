@@ -27,7 +27,7 @@ save_top_k = 1
 save_last = True
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
-gpus = [1]  # it does only work with one gpu
+gpus = "auto"  # it does only work with one gpu
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
