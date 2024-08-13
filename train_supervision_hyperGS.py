@@ -204,7 +204,7 @@ def main():
 
     early_stop_callback = EarlyStopping(
         monitor=config.monitor,
-        min_delta=0.00,
+        min_delta=0.001,
         patience=3,
         verbose=False,
         mode=config.monitor_mode,
@@ -259,6 +259,7 @@ def main():
                         )
 
                         # Train the model
+                        print(trainer.callback_metrics)
                         trainer.fit(model=model, ckpt_path=config.resume_ckpt_path)
 
                         # Check if this is the best model so far
