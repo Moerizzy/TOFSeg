@@ -190,6 +190,7 @@ class Supervision_Train(pl.LightningModule):
 def main():
     args = get_args()
     config = py2cfg(args.config_path)
+    print(config)
     seed_everything(42)
     torch.set_float32_matmul_precision("high")
 
@@ -259,7 +260,6 @@ def main():
                         )
 
                         # Train the model
-                        print(trainer.callback_metrics)
                         trainer.fit(model=model, ckpt_path=config.resume_ckpt_path)
 
                         # Check if this is the best model so far
