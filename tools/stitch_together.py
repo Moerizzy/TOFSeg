@@ -29,7 +29,7 @@ def stitch_images_grid(image_group, geospatial_path, output_path):
     for i, img in enumerate(images):
         if i >= 1:
             break
-        stitched_image.paste(img, (x_offset, y_offset))
+        stitched_image.paste(img, (0, 0))
 
     # Cut the padding from the stitched image
     # stitched_image = stitched_image.crop((0, 0, total_width, total_height))
