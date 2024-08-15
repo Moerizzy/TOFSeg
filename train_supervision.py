@@ -200,6 +200,13 @@ def main():
         dirpath=config.weights_path,
         filename=config.weights_name,
     )
+    early_stop_callback = EarlyStopping(
+        monitor=config.monitor,
+        min_delta=0,
+        patience=3,
+        verbose=False,
+        mode=config.monitor_mode,
+    )
     logger = CSVLogger("lightning_logs", name=config.log_name)
 
     model = Supervision_Train(config)

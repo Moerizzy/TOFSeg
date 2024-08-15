@@ -6,14 +6,14 @@ from tools.utils import Lookahead
 from tools.utils import process_model_params
 
 # training hparam
-max_epoch = 50
+max_epoch = 100
 ignore_index = len(CLASSES)
-train_batch_size = 2
-val_batch_size = 2
+train_batch_size = 8
+val_batch_size = 8
 lr = 6e-4  # learning_rates = [1e-5, 3e-5, 1e-4, 3e-4, 6e-4, 1e-3, 3e-3, 1e-2, 3e-2]
-weight_decay = 0.01  # Typical range: 1e-4 to 1e-2
-backbone_lr = 6e-5
-backbone_weight_decay = 0.01
+weight_decay = 1e-3  # Typical range: 1e-4 to 1e-2
+backbone_lr = 1e-5
+backbone_weight_decay = 1e-3
 num_classes = len(CLASSES)
 classes = CLASSES
 
@@ -51,8 +51,8 @@ test_dataset = TOFDataset(
     data_root="data/tof/test",
     transform=val_aug,
     mode="test",
-    img_dir="images_4096",
-    mask_dir="masks_4096",
+    img_dir="images_5000",
+    mask_dir="masks_5000",
 )
 
 train_loader = DataLoader(
