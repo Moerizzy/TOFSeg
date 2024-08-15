@@ -1,5 +1,5 @@
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from tools.cfg import py2cfg
 import os
 import torch
@@ -220,7 +220,7 @@ def main():
         max_epochs=config.max_epoch,
         accelerator="auto",
         check_val_every_n_epoch=config.check_val_every_n_epoch,
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, early_stop_callback],
         strategy="auto",
         logger=logger,
     )
