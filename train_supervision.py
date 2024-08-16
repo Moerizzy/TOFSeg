@@ -10,6 +10,7 @@ import argparse
 from pathlib import Path
 from tools.metric import Evaluator
 from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.strategies import DDPStrategy
 import random
 
 
@@ -221,7 +222,7 @@ def main():
         accelerator="auto",
         check_val_every_n_epoch=config.check_val_every_n_epoch,
         callbacks=[checkpoint_callback, early_stop_callback],
-        strategy="auto",
+        strategy=["auto", DDPStrategy(find_unused_parameters=True)],
         logger=logger,
     )
     trainer.fit(model=model, ckpt_path=config.resume_ckpt_path)
