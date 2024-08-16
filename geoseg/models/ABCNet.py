@@ -334,7 +334,7 @@ class ABCNet(nn.Module):
             feat_out16 = self.conv_out16(feat_cp8)
             feat_out32 = self.conv_out32(feat_cp16)
             return feat_out, feat_out16, feat_out32
-        feat_out = feat_out.argmax(dim=1)
+        # feat_out = feat_out.argmax(dim=1)
         return feat_out
 
     def init_weight(self):
