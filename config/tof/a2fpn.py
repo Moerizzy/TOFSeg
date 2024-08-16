@@ -54,14 +54,14 @@ test_dataset = TOFDataset(
     data_root="data/tof/test",
     transform=val_aug,
     mode="test",
-    img_dir="images_4096",
-    mask_dir="masks_4096",
+    img_dir="images_5000",
+    mask_dir="masks_5000",
 )
 
 train_loader = DataLoader(
     dataset=train_dataset,
     batch_size=train_batch_size,
-    num_workers=16,
+    num_workers=2,
     pin_memory=True,
     shuffle=True,
     drop_last=True,
@@ -70,7 +70,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=16,
+    num_workers=2,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
