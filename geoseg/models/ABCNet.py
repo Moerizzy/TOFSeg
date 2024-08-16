@@ -333,7 +333,7 @@ class ABCNet(nn.Module):
         if self.training:
             feat_out16 = self.conv_out16(feat_cp8)
             feat_out32 = self.conv_out32(feat_cp16)
-            return feat_out, feat_out16, feat_out32
+            return feat_out  # , feat_out16, feat_out32
         # feat_out = feat_out.argmax(dim=1)
         return feat_out
 
