@@ -9,19 +9,26 @@ def conv3otherRelu(in_planes, out_planes, kernel_size=None, stride=None, padding
     # 3x3 convolution with padding and relu
     if kernel_size is None:
         kernel_size = 3
-    assert isinstance(kernel_size, (int, tuple)), 'kernel_size is not in (int, tuple)!'
+    assert isinstance(kernel_size, (int, tuple)), "kernel_size is not in (int, tuple)!"
 
     if stride is None:
         stride = 1
-    assert isinstance(stride, (int, tuple)), 'stride is not in (int, tuple)!'
+    assert isinstance(stride, (int, tuple)), "stride is not in (int, tuple)!"
 
     if padding is None:
         padding = 1
-    assert isinstance(padding, (int, tuple)), 'padding is not in (int, tuple)!'
+    assert isinstance(padding, (int, tuple)), "padding is not in (int, tuple)!"
 
     return nn.Sequential(
-        nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=True),
-        nn.ReLU(inplace=True)  # inplace=True
+        nn.Conv2d(
+            in_planes,
+            out_planes,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=True,
+        ),
+        nn.ReLU(inplace=True),  # inplace=True
     )
 
 
@@ -37,13 +44,19 @@ class Attention(Module):
         self.l2_norm = l2_norm
         self.eps = eps
 
-        self.query_conv = Conv2d(in_channels=in_places, out_channels=in_places // scale, kernel_size=1)
-        self.key_conv = Conv2d(in_channels=in_places, out_channels=in_places // scale, kernel_size=1)
-        self.value_conv = Conv2d(in_channels=in_places, out_channels=in_places, kernel_size=1)
+        self.query_conv = Conv2d(
+            in_channels=in_places, out_channels=in_places // scale, kernel_size=1
+        )
+        self.key_conv = Conv2d(
+            in_channels=in_places, out_channels=in_places // scale, kernel_size=1
+        )
+        self.value_conv = Conv2d(
+            in_channels=in_places, out_channels=in_places, kernel_size=1
+        )
 
     def forward(self, x):
         # Apply the feature map to the queries and keys
-        batch_size, chnnels, height, width  = x.shape
+        batch_size, chnnels, height, width = x.shape
         Q = self.query_conv(x).view(batch_size, -1, width * height)
         K = self.key_conv(x).view(batch_size, -1, width * height)
         V = self.value_conv(x).view(batch_size, -1, width * height)
@@ -51,11 +64,14 @@ class Attention(Module):
         Q = self.l2_norm(Q).permute(-3, -1, -2)
         K = self.l2_norm(K)
 
-        tailor_sum = 1 / (width * height + torch.einsum("bnc, bc->bn", Q, torch.sum(K, dim=-1) + self.eps))
+        tailor_sum = 1 / (
+            width * height
+            + torch.einsum("bnc, bc->bn", Q, torch.sum(K, dim=-1) + self.eps)
+        )
         value_sum = torch.einsum("bcn->bc", V).unsqueeze(-1)
         value_sum = value_sum.expand(-1, chnnels, width * height)
 
-        matrix = torch.einsum('bmn, bcn->bmc', K, V)
+        matrix = torch.einsum("bmn, bcn->bmc", K, V)
         matrix_sum = value_sum + torch.einsum("bnm, bmc->bcn", Q, matrix)
 
         weight_value = torch.einsum("bcn, bn->bcn", matrix_sum, tailor_sum)
@@ -67,12 +83,14 @@ class Attention(Module):
 class ConvBNReLU(nn.Module):
     def __init__(self, in_chan, out_chan, ks=3, stride=1, padding=1, *args, **kwargs):
         super(ConvBNReLU, self).__init__()
-        self.conv = nn.Conv2d(in_chan,
-                              out_chan,
-                              kernel_size=ks,
-                              stride=stride,
-                              padding=padding,
-                              bias=False)
+        self.conv = nn.Conv2d(
+            in_chan,
+            out_chan,
+            kernel_size=ks,
+            stride=stride,
+            padding=padding,
+            bias=False,
+        )
         self.bn = BatchNorm2d(out_chan)
         self.relu = nn.ReLU(inplace=True)
         self.init_weight()
@@ -87,7 +105,8 @@ class ConvBNReLU(nn.Module):
         for ly in self.children():
             if isinstance(ly, nn.Conv2d):
                 nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None: nn.init.constant_(ly.bias, 0)
+                if not ly.bias is None:
+                    nn.init.constant_(ly.bias, 0)
 
 
 class UpSample(nn.Module):
@@ -105,7 +124,7 @@ class UpSample(nn.Module):
         return feat
 
     def init_weight(self):
-        nn.init.xavier_normal_(self.proj.weight, gain=1.)
+        nn.init.xavier_normal_(self.proj.weight, gain=1.0)
 
 
 class Output(nn.Module):
@@ -128,7 +147,8 @@ class Output(nn.Module):
         for ly in self.children():
             if isinstance(ly, nn.Conv2d):
                 nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None: nn.init.constant_(ly.bias, 0)
+                if not ly.bias is None:
+                    nn.init.constant_(ly.bias, 0)
 
     def get_params(self):
         wd_params, nowd_params = [], []
@@ -166,15 +186,20 @@ class AttentionEnhancementModule(nn.Module):
 class ContextPath(nn.Module):
     def __init__(self, pretrained=True, *args, **kwargs):
         super(ContextPath, self).__init__()
-        self.resnet = timm.create_model('swsl_resnet18', features_only=True, output_stride=32,
-                                        out_indices=(2, 3, 4), pretrained=pretrained)
+        self.resnet = timm.create_model(
+            "swsl_resnet18",
+            features_only=True,
+            output_stride=32,
+            out_indices=(2, 3, 4),
+            pretrained=pretrained,
+        )
         self.arm16 = AttentionEnhancementModule(256, 128)
         self.arm32 = AttentionEnhancementModule(512, 128)
         self.conv_head32 = ConvBNReLU(128, 128, ks=3, stride=1, padding=1)
         self.conv_head16 = ConvBNReLU(128, 128, ks=3, stride=1, padding=1)
         self.conv_avg = ConvBNReLU(512, 128, ks=1, stride=1, padding=0)
-        self.up32 = nn.Upsample(scale_factor=2.)
-        self.up16 = nn.Upsample(scale_factor=2.)
+        self.up32 = nn.Upsample(scale_factor=2.0)
+        self.up16 = nn.Upsample(scale_factor=2.0)
 
         self.init_weight()
 
@@ -235,7 +260,8 @@ class SpatialPath(nn.Module):
         for ly in self.children():
             if isinstance(ly, nn.Conv2d):
                 nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None: nn.init.constant_(ly.bias, 0)
+                if not ly.bias is None:
+                    nn.init.constant_(ly.bias, 0)
 
     def get_params(self):
         wd_params, nowd_params = [], []
@@ -269,7 +295,8 @@ class FeatureAggregationModule(nn.Module):
         for ly in self.children():
             if isinstance(ly, nn.Conv2d):
                 nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None: nn.init.constant_(ly.bias, 0)
+                if not ly.bias is None:
+                    nn.init.constant_(ly.bias, 0)
 
     def get_params(self):
         wd_params, nowd_params = [], []
@@ -286,7 +313,7 @@ class FeatureAggregationModule(nn.Module):
 class ABCNet(nn.Module):
     def __init__(self, band=3, n_classes=8, pretrained=True):
         super(ABCNet, self).__init__()
-        self.name = 'ABCNet'
+        self.name = "ABCNet"
         self.cp = ContextPath(pretrained)
         self.sp = SpatialPath()
         self.fam = FeatureAggregationModule(256, 256)
@@ -307,14 +334,15 @@ class ABCNet(nn.Module):
             feat_out16 = self.conv_out16(feat_cp8)
             feat_out32 = self.conv_out32(feat_cp16)
             return feat_out, feat_out16, feat_out32
-        # feat_out = feat_out.argmax(dim=1)
+        feat_out = feat_out.argmax(dim=1)
         return feat_out
 
     def init_weight(self):
         for ly in self.children():
             if isinstance(ly, nn.Conv2d):
                 nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None: nn.init.constant_(ly.bias, 0)
+                if not ly.bias is None:
+                    nn.init.constant_(ly.bias, 0)
 
     def get_params(self):
         wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = [], [], [], []
