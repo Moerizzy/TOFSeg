@@ -222,7 +222,7 @@ def main():
         accelerator="auto",
         check_val_every_n_epoch=config.check_val_every_n_epoch,
         callbacks=[checkpoint_callback, early_stop_callback],
-        strategy=["auto", DDPStrategy(find_unused_parameters=True)],
+        strategy=DDPStrategy(find_unused_parameters=True),
         logger=logger,
     )
     trainer.fit(model=model, ckpt_path=config.resume_ckpt_path)
