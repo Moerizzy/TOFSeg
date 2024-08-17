@@ -99,67 +99,91 @@ def sliding_window_inference(model, image, num_classes, window_size=1024, stride
     return prediction
 
 
-def calculate_and_save_metrics(evaluator, config, output_file):
-    metrics = OrderedDict()
-
-    iou_per_class = evaluator.Intersection_over_Union()
-    f1_per_class = evaluator.F1()
-    precision_per_class = evaluator.Precision()
-    recall_per_class = evaluator.Recall()
-    dice_per_class = evaluator.Dice()
-    OA = evaluator.OA()
-
-    # Per-class metrics
-    for (
-        class_name,
-        class_iou,
-        class_f1,
-        class_precision,
-        class_recall,
-        class_dice,
-    ) in zip(
-        config.classes,
-        iou_per_class,
-        f1_per_class,
-        precision_per_class,
-        recall_per_class,
-        dice_per_class,
-    ):
-        metrics[class_name] = {
-            "IoU": float(class_iou),
-            "F1": float(class_f1),
-            "Precision": float(class_precision),
-            "Recall": float(class_recall),
-            "Dice": float(class_dice),
-        }
-        print(f"{class_name}: F1={class_f1:.4f}, IoU={class_iou:.4f}")
-
-    # Mean metrics (excluding background class if it's the last one)
-    metrics["Mean"] = {
-        "mIoU": float(np.nanmean(iou_per_class[:-1])),
-        "mF1": float(np.nanmean(f1_per_class[:-1])),
-        "mPrecision": float(np.nanmean(precision_per_class[:-1])),
-        "mRecall": float(np.nanmean(recall_per_class[:-1])),
-        "mDice": float(np.nanmean(dice_per_class[:-1])),
+def create_region_evaluators(num_classes):
+    return {
+        "BB": Evaluator(num_class=num_classes),
+        "NRW_1": Evaluator(num_class=num_classes),
+        "NRW_3": Evaluator(num_class=num_classes),
+        "SH": Evaluator(num_class=num_classes),
+        "All": Evaluator(num_class=num_classes),
     }
 
-    # Overall Accuracy
-    metrics["Overall_Accuracy"] = float(OA)
 
-    # Print mean metrics
-    print(f"Mean metrics (excluding background):")
-    print(f"mIoU: {metrics['Mean']['mIoU']:.4f}")
-    print(f"mF1: {metrics['Mean']['mF1']:.4f}")
-    print(f"mPrecision: {metrics['Mean']['mPrecision']:.4f}")
-    print(f"mRecall: {metrics['Mean']['mRecall']:.4f}")
-    print(f"mDice: {metrics['Mean']['mDice']:.4f}")
-    print(f"Overall Accuracy: {metrics['Overall_Accuracy']:.4f}")
+def get_region_from_id(image_id):
+    if image_id.startswith("33_"):
+        return "BB"
+    elif image_id.startswith("32_4"):
+        return "NRW_1"
+    elif image_id.startswith("32_3"):
+        return "NRW_3"
+    elif image_id.startswith("32_5"):
+        return "SH"
+    return None
 
-    # Save metrics to file
-    with open(output_file, "w") as f:
-        json.dump(metrics, f, indent=4)
 
-    print(f"Metrics saved to {output_file}")
+def calculate_and_save_metrics(evaluators, config, output_path):
+    for region, evaluator in evaluators.items():
+        metrics = OrderedDict()
+
+        iou_per_class = evaluator.Intersection_over_Union()
+        f1_per_class = evaluator.F1()
+        precision_per_class = evaluator.Precision()
+        recall_per_class = evaluator.Recall()
+        dice_per_class = evaluator.Dice()
+        OA = evaluator.OA()
+
+        # Per-class metrics
+        for (
+            class_name,
+            class_iou,
+            class_f1,
+            class_precision,
+            class_recall,
+            class_dice,
+        ) in zip(
+            config.classes,
+            iou_per_class,
+            f1_per_class,
+            precision_per_class,
+            recall_per_class,
+            dice_per_class,
+        ):
+            metrics[class_name] = {
+                "IoU": float(class_iou),
+                "F1": float(class_f1),
+                "Precision": float(class_precision),
+                "Recall": float(class_recall),
+                "Dice": float(class_dice),
+            }
+            print(f"{region} - {class_name}: F1={class_f1:.4f}, IoU={class_iou:.4f}")
+
+        # Mean metrics (excluding background class if it's the last one)
+        metrics["Mean"] = {
+            "mIoU": float(np.nanmean(iou_per_class[:-1])),
+            "mF1": float(np.nanmean(f1_per_class[:-1])),
+            "mPrecision": float(np.nanmean(precision_per_class[:-1])),
+            "mRecall": float(np.nanmean(recall_per_class[:-1])),
+            "mDice": float(np.nanmean(dice_per_class[:-1])),
+        }
+
+        # Overall Accuracy
+        metrics["Overall_Accuracy"] = float(OA)
+
+        # Print mean metrics
+        print(f"{region} - Mean metrics (excluding background):")
+        print(f"mIoU: {metrics['Mean']['mIoU']:.4f}")
+        print(f"mF1: {metrics['Mean']['mF1']:.4f}")
+        print(f"mPrecision: {metrics['Mean']['mPrecision']:.4f}")
+        print(f"mRecall: {metrics['Mean']['mRecall']:.4f}")
+        print(f"mDice: {metrics['Mean']['mDice']:.4f}")
+        print(f"Overall Accuracy: {metrics['Overall_Accuracy']:.4f}")
+
+        # Save metrics to file
+        output_file = output_path / f"metrics_{region}.json"
+        with open(output_file, "w") as f:
+            json.dump(metrics, f, indent=4)
+
+        print(f"Metrics for {region} saved to {output_file}")
 
 
 def main():
@@ -173,8 +197,8 @@ def main():
     )
     model.cuda()
     model.eval()
-    evaluator = Evaluator(num_class=config.num_classes)
-    evaluator.reset()
+    evaluators = create_region_evaluators(config.num_classes)
+    # evaluator.reset()
     if args.tta == "lr":
         transforms = tta.Compose([tta.HorizontalFlip(), tta.VerticalFlip()])
         model = tta.SegmentationTTAWrapper(model, transforms)
@@ -221,10 +245,17 @@ def main():
 
             for i in range(predictions.shape[0]):
                 mask = predictions[i].cpu().numpy()
-                evaluator.add_batch(
+                mask_name = image_ids[i]
+                region = get_region_from_id(mask_name)
+
+                if region:
+                    evaluators[region].add_batch(
+                        pre_image=mask, gt_image=masks_true[i].cpu().numpy()
+                    )
+                evaluators["All"].add_batch(
                     pre_image=mask, gt_image=masks_true[i].cpu().numpy()
                 )
-                mask_name = image_ids[i]
+
                 results.append((mask, str(args.output_path / mask_name), args.rgb))
 
             # If you need to keep the probabilities for each class:
@@ -263,7 +294,7 @@ def main():
     #         np.nanmean(f1_per_class[:-1]), np.nanmean(iou_per_class[:-1]), OA
     #     )
     # )
-    calculate_and_save_metrics(evaluator, config, args.output_path / "metrics.json")
+    calculate_and_save_metrics(evaluators, config, args.output_path / "metrics.json")
     t0 = time.time()
     mpp.Pool(processes=mp.cpu_count()).map(img_writer, results)
     t1 = time.time()
