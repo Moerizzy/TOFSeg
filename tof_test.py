@@ -294,7 +294,7 @@ def main():
     #         np.nanmean(f1_per_class[:-1]), np.nanmean(iou_per_class[:-1]), OA
     #     )
     # )
-    calculate_and_save_metrics(evaluators, config, args.output_path / "metrics.json")
+    calculate_and_save_metrics(evaluators, config, args.output_path)
     t0 = time.time()
     mpp.Pool(processes=mp.cpu_count()).map(img_writer, results)
     t1 = time.time()
