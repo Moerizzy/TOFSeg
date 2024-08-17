@@ -19,7 +19,7 @@ classes = CLASSES
 
 weights_name = "unetformer"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer-v1"
+test_weights_name = "unetformer"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
