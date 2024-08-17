@@ -5,6 +5,7 @@ from einops import rearrange, repeat
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import timm
+from .lsknet import lsknet_b0, lsknet_b1
 
 
 class ConvBNReLU(nn.Sequential):
@@ -501,26 +502,48 @@ class Decoder(nn.Module):
                     nn.init.constant_(m.bias, 0)
 
 
-class UNetFormer(nn.Module):
-    def __init__(
-        self,
-        decode_channels=64,
-        dropout=0.2,
-        backbone_name="swsl_resnet18",
-        pretrained=True,
-        window_size=8,
-        num_classes=6,
-    ):
+class UNetFormer_lsk_t(nn.Module):
+    def __init__(self, decode_channels=64, dropout=0.2, window_size=8, num_classes=6):
         super().__init__()
 
-        self.backbone = timm.create_model(
-            backbone_name,
-            features_only=True,
-            output_stride=32,
-            out_indices=(1, 2, 3, 4),
-            pretrained=pretrained,
+        self.backbone = lsknet_b0()  # pass parameters here.
+        self.backbone.load_state_dict(
+            torch.load(
+                "/root/siton-gpfs-archive/yuxuanli/data/pretrained/lsk_t_backbone.pth.tar"
+            )["state_dict"],
+            strict=False,
         )
-        encoder_channels = self.backbone.feature_info.channels()
+        # timm.create_model(backbone_name, features_only=True, output_stride=32, out_indices=(1, 2, 3, 4), pretrained=pretrained)
+        encoder_channels = [32, 64, 160, 256]
+
+        self.decoder = Decoder(
+            encoder_channels, decode_channels, dropout, window_size, num_classes
+        )
+
+    def forward(self, x):
+        h, w = x.size()[-2:]
+        res1, res2, res3, res4 = self.backbone(x)
+        if self.training:
+            x, ah = self.decoder(res1, res2, res3, res4, h, w)
+            return x, ah
+        else:
+            x = self.decoder(res1, res2, res3, res4, h, w)
+            return x
+
+
+class UNetFormer_lsk_s(nn.Module):
+    def __init__(self, decode_channels=64, dropout=0.2, window_size=8, num_classes=6):
+        super().__init__()
+
+        self.backbone = lsknet_b1()  # pass parameters here.
+        self.backbone.load_state_dict(
+            torch.load(
+                "/root/siton-gpfs-archive/yuxuanli/data/pretrained/lsk_s_backbone.pth.tar"
+            )["state_dict"],
+            strict=False,
+        )
+        # timm.create_model(backbone_name, features_only=True, output_stride=32, out_indices=(1, 2, 3, 4), pretrained=pretrained)
+        encoder_channels = [64, 128, 320, 512]
 
         self.decoder = Decoder(
             encoder_channels, decode_channels, dropout, window_size, num_classes

@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from geoseg.losses import *
 from geoseg.datasets.tof_dataset import *
-from geoseg.models.UNetFormer import UNetFormer
+from geoseg.models.UNetFormer_lsk import UNetFormer_lsk_s
 from tools.utils import Lookahead
 from tools.utils import process_model_params
 
@@ -17,9 +17,9 @@ backbone_weight_decay = 1e-3
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "unetformer"
+weights_name = "unetformer_lsk_s"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "unetformer"
+test_weights_name = "unetformer_lsk_s"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
@@ -31,7 +31,7 @@ gpus = "auto"  # [1, 2, 3] #  default or gpu ids:[0] or gpu nums: 2, more settin
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
-net = UNetFormer(num_classes=num_classes)
+net = UNetFormer_lsk_s(num_classes=num_classes)
 
 # define the loss
 loss = UnetFormerLoss(ignore_index=ignore_index)
