@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from geoseg.losses import *
 from geoseg.datasets.tof_dataset import *
-from geoseg.models.DCSwin import dcswin_small
+from geoseg.models.DCSwin import dcswin_tiny
 from tools.utils import Lookahead
 from tools.utils import process_model_params
 
@@ -18,9 +18,9 @@ accumulate_n = 1
 num_classes = len(CLASSES)
 classes = CLASSES
 
-weights_name = "dcswin"
+weights_name = "dcswin_tiny"
 weights_path = "model_weights/tof/{}".format(weights_name)
-test_weights_name = "dcswin"
+test_weights_name = "dcswin_tiny"
 log_name = "tof/{}".format(weights_name)
 monitor = "val_F1"
 monitor_mode = "max"
@@ -32,7 +32,7 @@ gpus = "auto"  # default or gpu ids:[0] or gpu nums: 2, more setting can refer t
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 #  define the network
-net = dcswin_small(num_classes=num_classes)
+net = dcswin_tiny(num_classes=num_classes)
 
 # define the loss
 loss = JointLoss(
