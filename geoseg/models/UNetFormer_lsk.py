@@ -508,9 +508,7 @@ class UNetFormer_lsk_t(nn.Module):
 
         self.backbone = lsknet_b0()  # pass parameters here.
         self.backbone.load_state_dict(
-            torch.load(
-                "/root/siton-gpfs-archive/yuxuanli/data/pretrained/lsk_t_backbone.pth.tar"
-            )["state_dict"],
+            torch.load("pretrain_weights/lsk_t_backbone.pth")["state_dict"],
             strict=False,
         )
         # timm.create_model(backbone_name, features_only=True, output_stride=32, out_indices=(1, 2, 3, 4), pretrained=pretrained)
@@ -537,9 +535,7 @@ class UNetFormer_lsk_s(nn.Module):
 
         self.backbone = lsknet_b1()  # pass parameters here.
         self.backbone.load_state_dict(
-            torch.load(
-                "/root/siton-gpfs-archive/yuxuanli/data/pretrained/lsk_s_backbone.pth.tar"
-            )["state_dict"],
+            torch.load("pretrain_weights/lsk_s_backbone.pth")["state_dict"],
             strict=False,
         )
         # timm.create_model(backbone_name, features_only=True, output_stride=32, out_indices=(1, 2, 3, 4), pretrained=pretrained)
