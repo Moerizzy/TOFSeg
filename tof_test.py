@@ -15,6 +15,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from collections import OrderedDict
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 
 def seed_everything(seed):
     random.seed(seed)
