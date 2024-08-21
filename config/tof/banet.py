@@ -27,7 +27,7 @@ save_top_k = 1
 save_last = False
 check_val_every_n_epoch = 1
 pretrained_ckpt_path = None  # the path for the pretrained model weight
-gpus = "auto"  # use the third GPU
+gpus = [1]  # "auto"  # use the third GPU
 resume_ckpt_path = None  # whether continue training with the checkpoint, default None
 
 net = BANet(num_classes=num_classes)
