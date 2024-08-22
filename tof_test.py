@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from collections import OrderedDict
 
-torch.cuda.set_device(1)  # Use GPU 0
+torch.cuda.set_device(1)  # Use GPU 1
 
 
 def seed_everything(seed):

@@ -35,39 +35,39 @@ for site in sites:
                 except Exception as e:
                     print(f"Failed to copy {file_path}: {e}")
 
-    with open(text_file_path_val, "r") as file:
-        for line in file:
-            # Get the path from the line and strip any surrounding whitespace
-            file_path = line.strip()
-            file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
-            print(file_path2)
+    # with open(text_file_path_val, "r") as file:
+    #     for line in file:
+    #         # Get the path from the line and strip any surrounding whitespace
+    #         file_path = line.strip()
+    #         file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
+    #         print(file_path2)
 
-            # Only proceed if the path is not empty
-            if file_path:
-                # Copy the file to the destination directory
-                try:
-                    shutil.copy2(
-                        file_path2,
-                        destination_directory_val_images,
-                    )
-                    shutil.copy2(file_path, destination_directory_val_masks)
-                except Exception as e:
-                    print(f"Failed to copy {file_path}: {e}")
+    #         # Only proceed if the path is not empty
+    #         if file_path:
+    #             # Copy the file to the destination directory
+    #             try:
+    #                 shutil.copy2(
+    #                     file_path2,
+    #                     destination_directory_val_images,
+    #                 )
+    #                 shutil.copy2(file_path, destination_directory_val_masks)
+    #             except Exception as e:
+    #                 print(f"Failed to copy {file_path}: {e}")
 
-        # copying all the remaining files that are not part of the test set
-        print("Copying remaining files to train set.")
-        for file in os.listdir(f"data/sites/{site}/Masks"):
+    #     # copying all the remaining files that are not part of the test set
+    #     print("Copying remaining files to train set.")
+    #     for file in os.listdir(f"data/sites/{site}/Masks"):
 
-            if file not in os.listdir(
-                destination_directory_test_masks
-            ) and file not in os.listdir(destination_directory_val_masks):
-                shutil.copy2(
-                    f"data/sites/{site}/Masks/{file}",
-                    destination_directory_train_masks,
-                )
-                shutil.copy2(
-                    f"data/sites/{site}/TOP/{file.replace('mask', 'TOP')}",
-                    destination_directory_train_images,
-                )
+    #         if file not in os.listdir(
+    #             destination_directory_test_masks
+    #         ) and file not in os.listdir(destination_directory_val_masks):
+    #             shutil.copy2(
+    #                 f"data/sites/{site}/Masks/{file}",
+    #                 destination_directory_train_masks,
+    #             )
+    #             shutil.copy2(
+    #                 f"data/sites/{site}/TOP/{file.replace('mask', 'TOP')}",
+    #                 destination_directory_train_images,
+    #             )
 
 print("File copying complete.")
