@@ -90,7 +90,6 @@ test_dataset = TOFDataset(
     mode="test",
     img_dir="images_5000",
     mask_dir="masks_5000",
-    num_workers=0,
 )
 
 train_loader = DataLoader(
