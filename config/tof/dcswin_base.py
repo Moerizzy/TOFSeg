@@ -44,41 +44,6 @@ loss = JointLoss(
 
 use_aux_loss = False
 
-
-# # define the dataloader
-# def get_training_transform():
-#     train_transform = [albu.RandomRotate90(p=0.5), albu.Normalize()]
-#     return albu.Compose(train_transform)
-
-
-# def train_aug(img, mask):
-#     crop_aug = Compose(
-#         [
-#             RandomScale(scale_list=[0.5, 0.75, 1.0, 1.25, 1.5], mode="value"),
-#             SmartCropV1(
-#                 crop_size=512, max_ratio=0.75, ignore_index=len(CLASSES), nopad=False
-#             ),
-#         ]
-#     )
-#     img, mask = crop_aug(img, mask)
-#     img, mask = np.array(img), np.array(mask)
-#     aug = get_training_transform()(image=img.copy(), mask=mask.copy())
-#     img, mask = aug["image"], aug["mask"]
-#     return img, mask
-
-
-# def get_val_transform():
-#     val_transform = [albu.Normalize()]
-#     return albu.Compose(val_transform)
-
-
-# def val_aug(img, mask):
-#     img, mask = np.array(img), np.array(mask)
-#     aug = get_val_transform()(image=img.copy(), mask=mask.copy())
-#     img, mask = aug["image"], aug["mask"]
-#     return img, mask
-
-
 train_dataset = TOFDataset(
     data_root="data/tof/train", mode="test", transform=train_aug  # mosaic_ratio=0.25,
 )
