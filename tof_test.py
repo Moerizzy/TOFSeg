@@ -95,7 +95,7 @@ def sliding_window_inference(model, image, num_classes, window_size=1024, stride
         for w in range(0, padded_W - window_size + 1, stride):
             window = image[:, :, h : h + window_size, w : w + window_size]
             with torch.no_grad():
-                output = model(window)
+                output = model(window).to(3)
             prediction[:, :, h : h + window_size, w : w + window_size] += output
             count[:, :, h : h + window_size, w : w + window_size] += 1
 
