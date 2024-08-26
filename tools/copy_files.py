@@ -19,8 +19,9 @@ for site in sites:
     with open(text_file_path_test, "r") as file:
         for line in file:
             # Get the path from the line and strip any surrounding whitespace
-            file_path = line.strip().replace("Masks", "Masks_reclass")
+            file_path = line.strip()
             file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
+            file_path = file_path.replace("Masks", "Masks_reclass")
             print(file_path2)
 
             # Only proceed if the path is not empty
@@ -38,8 +39,9 @@ for site in sites:
     with open(text_file_path_val, "r") as file:
         for line in file:
             # Get the path from the line and strip any surrounding whitespace
-            file_path = line.strip().replace("Masks", "Masks_reclass")
+            file_path = line.strip()
             file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
+            file_path = file_path.replace("Masks", "Masks_reclass")
             print(file_path2)
 
             # Only proceed if the path is not empty
