@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from geoseg.losses import *
 from geoseg.datasets.tof_dataset import *
-from geoseg.models.UNetFormer import UNET
+from geoseg.models.UNET import UNET
 from tools.utils import Lookahead
 from tools.utils import process_model_params
 
