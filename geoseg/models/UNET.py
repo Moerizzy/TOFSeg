@@ -82,7 +82,7 @@ class UNET(nn.Module):
         self,
         decode_channels=64,
         dropout=0.2,
-        backbone_name="efficientnet_b5",
+        backbone_name="resnet50",
         pretrained=True,
         num_classes=6,
         bilinear=True,
