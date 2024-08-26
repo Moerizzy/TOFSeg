@@ -1,3 +1,6 @@
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import ttach as tta
 import multiprocessing.pool as mpp
 import multiprocessing as mp
@@ -14,12 +17,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from collections import OrderedDict
-import os
+
 
 torch.cuda.empty_cache()
-torch.cuda.set_device(3)  # Use GPU 1
+# torch.cuda.set_device(3)  # Use GPU 1
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 print(f"Using GPU: {torch.cuda.current_device()}")
 
