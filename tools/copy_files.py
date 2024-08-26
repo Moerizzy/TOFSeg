@@ -19,7 +19,7 @@ for site in sites:
     with open(text_file_path_test, "r") as file:
         for line in file:
             # Get the path from the line and strip any surrounding whitespace
-            file_path = line.strip()
+            file_path = line.strip().replace("Masks", "Masks_reclass")
             file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
             print(file_path2)
 
@@ -38,7 +38,7 @@ for site in sites:
     with open(text_file_path_val, "r") as file:
         for line in file:
             # Get the path from the line and strip any surrounding whitespace
-            file_path = line.strip()
+            file_path = line.strip().replace("Masks", "Masks_reclass")
             file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
             print(file_path2)
 
@@ -62,7 +62,7 @@ for site in sites:
                 destination_directory_test_masks
             ) and file not in os.listdir(destination_directory_val_masks):
                 shutil.copy2(
-                    f"data/sites/{site}/Masks/{file}",
+                    f"data/sites/{site}/Masks_reclass/{file}",
                     destination_directory_train_masks,
                 )
                 shutil.copy2(
