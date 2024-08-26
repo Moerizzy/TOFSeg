@@ -95,7 +95,7 @@ def sliding_window_inference(model, image, num_classes, window_size=1024, stride
         for w in range(0, padded_W - window_size + 1, stride):
             window = image[:, :, h : h + window_size, w : w + window_size]
             with torch.no_grad():
-                output = model(window).to(3)
+                output = model(window)
             prediction[:, :, h : h + window_size, w : w + window_size] += output
             count[:, :, h : h + window_size, w : w + window_size] += 1
 
@@ -200,7 +200,7 @@ def main():
         os.path.join(config.weights_path, config.test_weights_name + ".ckpt"),
         config=config,
     )
-    model.cuda()
+    model.cuda(3)
     model.eval()
     evaluators = create_region_evaluators(config.num_classes)
     # evaluator.reset()
