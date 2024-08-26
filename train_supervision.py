@@ -1,6 +1,6 @@
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "[1,2,3]"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
