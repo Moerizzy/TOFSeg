@@ -200,7 +200,8 @@ def main():
         os.path.join(config.weights_path, config.test_weights_name + ".ckpt"),
         config=config,
     )
-    model.cuda(3)
+    model = model.to(3)
+    model.cuda()
     model.eval()
     evaluators = create_region_evaluators(config.num_classes)
     # evaluator.reset()
