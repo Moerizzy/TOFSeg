@@ -18,7 +18,7 @@ from collections import OrderedDict
 torch.cuda.empty_cache()
 torch.cuda.set_device(3)  # Use GPU 1
 
-print(f"Using GPU: {torch.cuda.get_device_name(3)}")
+print(f"Using GPU: {torch.cuda.current_device()}")
 
 
 def seed_everything(seed):
