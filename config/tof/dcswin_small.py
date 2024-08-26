@@ -9,7 +9,7 @@ from tools.utils import process_model_params
 max_epoch = 100
 ignore_index = len(CLASSES)
 train_batch_size = 8
-val_batch_size = 8
+val_batch_size = 1
 lr = 6e-4
 weight_decay = 1e-3
 backbone_lr = 1e-5
@@ -69,7 +69,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=val_batch_size,
-    num_workers=2,
+    num_workers=0,
     shuffle=False,
     pin_memory=True,
     drop_last=False,
