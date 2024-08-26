@@ -109,9 +109,6 @@ class UNET(nn.Module):
         self.up4 = Up(128, 64, bilinear)
         self.outc = OutConv(64, num_classes)
 
-        if self.training:
-            self.aux_head = AuxHead(512, num_classes)
-
     def forward(self, x):
         h, w = x.size()[-2:]
         x1 = self.inc(x)
