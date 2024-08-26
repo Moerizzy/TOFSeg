@@ -77,12 +77,24 @@ class OutConv(nn.Module):
         return self.conv(x)
 
 
+class AuxHead(nn.Module):
+    def __init__(self, in_channels, num_classes):
+        super(AuxHead, self).__init__()
+        self.conv = nn.Conv2d(in_channels, num_classes, kernel_size=1)
+
+    def forward(self, x, h, w):
+        x = self.conv(x)
+        return nn.functional.interpolate(
+            x, size=(h, w), mode="bilinear", align_corners=False
+        )
+
+
 class UNET(nn.Module):
     def __init__(
         self,
         decode_channels=64,
         dropout=0.2,
-        backbone_name="resnet50",
+        backbone_name="efficientnet_b5",
         pretrained=True,
         num_classes=6,
         bilinear=True,
@@ -108,6 +120,7 @@ class UNET(nn.Module):
         self.up3 = Up(256, 128 // factor, bilinear)
         self.up4 = Up(128, 64, bilinear)
         self.outc = OutConv(64, num_classes)
+        self.aux_head = AuxHead(512, num_classes)
 
     def forward(self, x):
         h, w = x.size()[-2:]
