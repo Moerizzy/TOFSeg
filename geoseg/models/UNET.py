@@ -92,10 +92,8 @@ class AuxHead(nn.Module):
 class UNET(nn.Module):
     def __init__(
         self,
-        decode_channels=64,
-        dropout=0.2,
         backbone_name="efficientnet_b5",
-        pretrained=True,
+        pretrained=False,
         num_classes=6,
         bilinear=True,
     ):
@@ -107,7 +105,6 @@ class UNET(nn.Module):
             out_indices=(1, 2, 3, 4),
             pretrained=pretrained,
         )
-        encoder_channels = self.backbone.feature_info.channels()
 
         self.inc = DoubleConv(3, 64)
         self.down1 = Down(64, 128)
