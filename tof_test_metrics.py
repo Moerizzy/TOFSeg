@@ -60,7 +60,7 @@ def img_writer(inp):
 def get_args():
     parser = argparse.ArgumentParser()
     arg = parser.add_argument
-    arg("-c", "--config_path", type=Path, required=True, help="Path to  config")
+    arg("-c", "--config_path", type=Path, required=True, help="Path to config")
     arg(
         "-o",
         "--output_path",
@@ -76,6 +76,17 @@ def get_args():
         choices=[None, "d4", "lr"],
     )
     arg("--rgb", help="whether output rgb images", action="store_true")
+    arg(
+        "--use_existing_predictions",
+        help="Use existing prediction files instead of running the model",
+        action="store_true",
+    )
+    arg(
+        "--p",
+        type=Path,
+        help="Path to existing prediction files",
+        default=None,
+    )
     return parser.parse_args()
 
 
@@ -237,65 +248,88 @@ def save_error_matrix_to_csv(error_matrix, class_names, file_path):
             writer.writerow([class_names_list[i]] + [f"{x:.4f}" for x in row])
 
 
+def load_existing_predictions(predictions_path, image_ids):
+    predictions = {}
+    for image_id in image_ids:
+        pred_file = predictions_path / f"{image_id}.png"
+        if pred_file.exists():
+            pred = cv2.imread(str(pred_file), cv2.IMREAD_GRAYSCALE)
+            predictions[image_id] = pred
+        else:
+            print(f"Warning: Prediction file not found for {image_id}")
+    return predictions
+
+
 def main():
     seed_everything(42)
     args = get_args()
     config = py2cfg(args.config_path)
     args.output_path.mkdir(exist_ok=True, parents=True)
-    model = Supervision_Train.load_from_checkpoint(
-        os.path.join(config.weights_path, config.test_weights_name + ".ckpt"),
-        config=config,
-    )
-    model.cuda()
-    model.eval()
+
     evaluators = create_region_evaluators(config.num_classes)
-    # evaluator.reset()
-    if args.tta == "lr":
-        transforms = tta.Compose([tta.HorizontalFlip(), tta.VerticalFlip()])
-        model = tta.SegmentationTTAWrapper(model, transforms)
-    elif args.tta == "d4":
-        transforms = tta.Compose(
-            [
-                tta.HorizontalFlip(),
-                tta.VerticalFlip(),
-                tta.Rotate90(angles=[90]),
-                tta.Scale(
-                    scales=[0.5, 0.75, 1.0, 1.25, 1.5],
-                    interpolation="bicubic",
-                    align_corners=False,
-                ),
-            ]
+
+    if not args.use_existing_predictions:
+        model = Supervision_Train.load_from_checkpoint(
+            os.path.join(config.weights_path, config.test_weights_name + ".ckpt"),
+            config=config,
         )
-        model = tta.SegmentationTTAWrapper(model, transforms)
+        model.cuda()
+        model.eval()
+
+        if args.tta == "lr":
+            transforms = tta.Compose([tta.HorizontalFlip(), tta.VerticalFlip()])
+            model = tta.SegmentationTTAWrapper(model, transforms)
+        elif args.tta == "d4":
+            transforms = tta.Compose(
+                [
+                    tta.HorizontalFlip(),
+                    tta.VerticalFlip(),
+                    tta.Rotate90(angles=[90]),
+                    tta.Scale(
+                        scales=[0.5, 0.75, 1.0, 1.25, 1.5],
+                        interpolation="bicubic",
+                        align_corners=False,
+                    ),
+                ]
+            )
+            model = tta.SegmentationTTAWrapper(model, transforms)
 
     test_dataset = config.test_dataset
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=1,
+        num_workers=0,
+        pin_memory=True,
+        drop_last=False,
+    )
+
+    results = []
+
+    if args.use_existing_predictions:
+        if args.predictions_path is None:
+            raise ValueError(
+                "Predictions path must be provided when using existing predictions"
+            )
+        existing_predictions = load_existing_predictions(
+            args.predictions_path, [input["img_id"][0] for input in test_loader]
+        )
 
     with torch.no_grad():
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=1,
-            num_workers=0,
-            pin_memory=True,
-            drop_last=False,
-        )
-        results = []
         for input in tqdm(test_loader):
-
-            image = input["img"].cuda()
             image_ids = input["img_id"]
             masks_true = input["gt_semantic_seg"]
 
-            # Perform sliding window inference
-            raw_predictions = sliding_window_inference(model, image, config.num_classes)
+            if args.use_existing_predictions:
+                predictions = [existing_predictions[img_id] for img_id in image_ids]
+            else:
+                image = input["img"].cuda()
+                raw_predictions = sliding_window_inference(
+                    model, image, config.num_classes
+                )
+                class_probabilities = nn.Softmax(dim=1)(raw_predictions)
+                predictions = class_probabilities.argmax(dim=1).cpu().numpy()
 
-            # Apply softmax to get class probabilities
-            class_probabilities = nn.Softmax(dim=1)(raw_predictions)
-
-            # Get final predictions (class with highest probability for each pixel)
-            predictions = class_probabilities.argmax(dim=1)
-
-            for i in range(predictions.shape[0]):
-                mask = predictions[i].cpu().numpy()
+            for i, mask in enumerate(predictions):
                 mask_name = image_ids[i]
                 region = get_region_from_id(mask_name)
 
@@ -307,50 +341,17 @@ def main():
                     pre_image=mask, gt_image=masks_true[i].cpu().numpy()
                 )
 
-                results.append((mask, str(args.output_path / mask_name), args.rgb))
+                if not args.use_existing_predictions:
+                    results.append((mask, str(args.output_path / mask_name), args.rgb))
 
-            # If you need to keep the probabilities for each class:
-            # class_probabilities_np = class_probabilities.cpu().numpy()
-            # You can then use class_probabilities_np for further analysis or storage
-
-            # # raw_prediction NxCxHxW
-            # raw_predictions = model(input["img"].cuda())
-
-            # image_ids = input["img_id"]
-            # masks_true = input["gt_semantic_seg"]
-
-            # raw_predictions = nn.Softmax(dim=1)(raw_predictions)
-            # predictions = raw_predictions.argmax(dim=1)
-
-            # for i in range(raw_predictions.shape[0]):
-            #     mask = predictions[i].cpu().numpy()
-            #     evaluator.add_batch(
-            #         pre_image=mask, gt_image=masks_true[i].cpu().numpy()
-            #     )
-            #     mask_name = image_ids[i]
-            #     results.append((mask, str(args.output_path / mask_name), args.rgb))
-
-    # iou_per_class = evaluator.Intersection_over_Union()
-    # f1_per_class = evaluator.F1()
-    # precision_per_class = evaluator.Precision()
-    # recall_per_class = evaluator.Recall()
-    # dice_per_class = evaluator.Dice()
-    # OA = evaluator.OA()
-    # for class_name, class_iou, class_f1 in zip(
-    #     config.classes, iou_per_class, f1_per_class
-    # ):
-    #     print("F1_{}:{}, IOU_{}:{}".format(class_name, class_f1, class_name, class_iou))
-    # print(
-    #     "F1:{}, mIOU:{}, OA:{}".format(
-    #         np.nanmean(f1_per_class[:-1]), np.nanmean(iou_per_class[:-1]), OA
-    #     )
-    # )
     calculate_and_save_metrics(evaluators, config, args.output_path)
-    t0 = time.time()
-    mpp.Pool(processes=mp.cpu_count()).map(img_writer, results)
-    t1 = time.time()
-    img_write_time = t1 - t0
-    print("images writing spends: {} s".format(img_write_time))
+
+    if not args.use_existing_predictions:
+        t0 = time.time()
+        mpp.Pool(processes=mp.cpu_count()).map(img_writer, results)
+        t1 = time.time()
+        img_write_time = t1 - t0
+        print("images writing spends: {} s".format(img_write_time))
 
 
 if __name__ == "__main__":
