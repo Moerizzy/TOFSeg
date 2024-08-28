@@ -82,7 +82,8 @@ def get_args():
         action="store_true",
     )
     arg(
-        "--p",
+        "-p",
+        "--predictions_path",
         type=Path,
         help="Path to existing prediction files",
         default=None,
