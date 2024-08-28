@@ -21,7 +21,7 @@ for site in sites:
             # Get the path from the line and strip any surrounding whitespace
             file_path = line.strip()
             file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
-            file_path = file_path.replace("Masks", "Masks_reclass")
+            # file_path = file_path.replace("Masks", "Masks_reclass")
             print(file_path2)
 
             # Only proceed if the path is not empty
@@ -41,7 +41,7 @@ for site in sites:
             # Get the path from the line and strip any surrounding whitespace
             file_path = line.strip()
             file_path2 = file_path.replace("mask", "TOP").replace("Masks", "TOP")
-            file_path = file_path.replace("Masks", "Masks_reclass")
+            # file_path = file_path.replace("Masks", "Masks_reclass")
             print(file_path2)
 
             # Only proceed if the path is not empty
@@ -64,7 +64,7 @@ for site in sites:
                 destination_directory_test_masks
             ) and file not in os.listdir(destination_directory_val_masks):
                 shutil.copy2(
-                    f"data/sites/{site}/Masks_reclass/{file}",
+                    f"data/sites/{site}/Masks/{file}",
                     destination_directory_train_masks,
                 )
                 shutil.copy2(
