@@ -1,13 +1,15 @@
 #!/bin/bash
 
+python GeoSeg/tof_test.py -c GeoSeg/config/tof/unet.py -o fig_results/tof/unet
+python GeoSeg/tools/stitch_together.py "fig_results/tof/unet"
 # python GeoSeg/tof_test.py -c GeoSeg/config/tof/unetformer.py -o fig_results/tof/unetformer
 # python GeoSeg/tools/stitch_together.py "fig_results/tof/unetformer"
-python GeoSeg/tof_test.py -c GeoSeg/config/tof/dcswin_small.py -o fig_results/tof/dcswin_small
-python GeoSeg/tools/stitch_together.py "fig_results/tof/dcswin_small"
+# python GeoSeg/tof_test.py -c GeoSeg/config/tof/dcswin_small.py -o fig_results/tof/dcswin_small
+# python GeoSeg/tools/stitch_together.py "fig_results/tof/dcswin_small"
 # python GeoSeg/tof_test.py -c GeoSeg/config/tof/dcswin_tiny.py -o fig_results/tof/dcswin_tiny
 # python GeoSeg/tools/stitch_together.py "fig_results/tof/dcswin_tiny"
-python GeoSeg/tof_test.py -c GeoSeg/config/tof/dcswin_base.py -o fig_results/tof/dcswin_base
-python GeoSeg/tools/stitch_together.py "fig_results/tof/dcswin_base"
+# python GeoSeg/tof_test.py -c GeoSeg/config/tof/dcswin_base.py -o fig_results/tof/dcswin_base
+# python GeoSeg/tools/stitch_together.py "fig_results/tof/dcswin_base"
 python GeoSeg/tof_test.py -c GeoSeg/config/tof/ftunetformer.py -o fig_results/tof/ftunetformer
 python GeoSeg/tools/stitch_together.py "fig_results/tof/ftunetformer"
 # python GeoSeg/tof_test.py -c GeoSeg/config/tof/banet.py -o fig_results/tof/banet

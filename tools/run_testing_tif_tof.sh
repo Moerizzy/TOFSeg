@@ -1,7 +1,5 @@
 #!/bin/bash
 
-python GeoSeg/tof_test.py -c GeoSeg/config/tof/unet.py -o fig_results/tof/unet
-python GeoSeg/tools/stitch_together.py "fig_results/tof/unet"
 python GeoSeg/tof_test.py -c GeoSeg/config/tif_tof/unet.py -o fig_results/tif_tof/unet
 python GeoSeg/tof_test.py -c GeoSeg/config/tif_tof/unetformer.py -o fig_results/tif_tof/unetformer
 python GeoSeg/tools/stitch_together.py "fig_results/tif_tof/unetformer"

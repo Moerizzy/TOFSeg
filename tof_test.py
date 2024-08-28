@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 import torch
 import json
+import csv
 
 from torch import nn
 from torch.utils.data import DataLoader
@@ -127,15 +128,30 @@ def get_region_from_id(image_id):
 
 
 def calculate_and_save_metrics(evaluators, config, output_path):
+    overall_confusion_matrix = None
+
     for region, evaluator in evaluators.items():
         metrics = OrderedDict()
-
         iou_per_class = evaluator.Intersection_over_Union()
         f1_per_class = evaluator.F1()
         precision_per_class = evaluator.Precision()
         recall_per_class = evaluator.Recall()
         dice_per_class = evaluator.Dice()
         OA = evaluator.OA()
+
+        # Get confusion matrix
+        confusion_matrix = evaluator.confusion_matrix
+
+        # Add to overall confusion matrix
+        if overall_confusion_matrix is None:
+            overall_confusion_matrix = confusion_matrix
+        else:
+            overall_confusion_matrix += confusion_matrix
+
+        # Calculate normalized error matrix
+        normalized_error_matrix = confusion_matrix / confusion_matrix.sum(
+            axis=1, keepdims=True
+        )
 
         # Per-class metrics
         for (
@@ -183,12 +199,38 @@ def calculate_and_save_metrics(evaluators, config, output_path):
         print(f"mDice: {metrics['Mean']['mDice']:.4f}")
         print(f"Overall Accuracy: {metrics['Overall_Accuracy']:.4f}")
 
-        # Save metrics to file
+        # Save metrics to JSON file
         output_file = output_path / f"metrics_{region}.json"
         with open(output_file, "w") as f:
             json.dump(metrics, f, indent=4)
-
         print(f"Metrics for {region} saved to {output_file}")
+
+        # Save normalized error matrix to CSV file
+        csv_output_file = output_path / f"normalized_error_matrix_{region}.csv"
+        save_error_matrix_to_csv(
+            normalized_error_matrix, config.classes, csv_output_file
+        )
+        print(f"Normalized error matrix for {region} saved to {csv_output_file}")
+
+    # Calculate and save overall normalized error matrix
+    overall_normalized_error_matrix = (
+        overall_confusion_matrix / overall_confusion_matrix.sum(axis=1, keepdims=True)
+    )
+    overall_csv_output_file = output_path / "overall_normalized_error_matrix.csv"
+    save_error_matrix_to_csv(
+        overall_normalized_error_matrix, config.classes, overall_csv_output_file
+    )
+    print(f"Overall normalized error matrix saved to {overall_csv_output_file}")
+
+
+def save_error_matrix_to_csv(error_matrix, class_names, file_path):
+    with open(file_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        # Write header
+        writer.writerow([""] + class_names)
+        # Write data
+        for i, row in enumerate(error_matrix):
+            writer.writerow([class_names[i]] + [f"{x:.4f}" for x in row])
 
 
 def main():
