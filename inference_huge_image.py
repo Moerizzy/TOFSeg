@@ -16,6 +16,7 @@ from tqdm import tqdm
 from train_supervision import *
 import random
 import os
+import rasterio
 
 
 def seed_everything(seed):
@@ -265,9 +266,24 @@ def main():
                 for i in range(predictions.shape[0]):
                     mask = predictions[i].cpu().numpy()
                     output_mask = mask
-                    # results.append((mask, image_ids[i].cpu().numpy()))
 
-        cv2.imwrite(os.path.join(args.output_path, img_name), output_mask)
+        output_image = os.path.join(args.output_path, img_name)
+
+        cv2.imwrite(output_image, output_mask)
+
+        # Find the corresponding image to get geospatial information
+        with rasterio.open(img_path) as src:
+            # Get the geospatial information from the corresponding image
+            geospatial_info = src.meta
+
+        # Save the stitched image as a geotiff with the updated geospatial information
+        with rasterio.open(output_image, "w", **geospatial_info) as dst:
+            dst.write(output_image, indexes=1)
+
+        # Save the geotif as shapefile
+        os.system(
+            f"gdal_polygonize.py {output_image} -f 'ESRI Shapefile' {output_image.replace('.png', '.shp')}"
+        )
 
 
 if __name__ == "__main__":
