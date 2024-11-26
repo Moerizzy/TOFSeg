@@ -6,7 +6,9 @@ which mainly focuses on detecting Trees outside Forest in high resolution aerial
 
 ## Major Features
 
-- Can handle huge inference images by cutting them and stitching together using overlapping predictions
+- Segmentation and classification of aerial imagery into four trees outside forest classes (Forest, Patch, Linear, Tree)
+- Six trained models [available](https://myshare.uni-osnabrueck.de/d/1926bba15b42484282fc/)
+- Can handle large inference images by slicing and stitching them together using overlapping predictions
 
 ## Supported Networks
 
