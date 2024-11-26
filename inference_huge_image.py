@@ -20,7 +20,7 @@ import os
 
 def seed_everything(seed):
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -81,14 +81,38 @@ def uavid2rgb(mask):
 def get_args():
     parser = argparse.ArgumentParser()
     arg = parser.add_argument
-    arg("-i", "--image_path", type=Path, required=True, help="Path to  huge image folder")
+    arg(
+        "-i",
+        "--image_path",
+        type=Path,
+        required=True,
+        help="Path to  huge image folder",
+    )
     arg("-c", "--config_path", type=Path, required=True, help="Path to  config")
-    arg("-o", "--output_path", type=Path, help="Path to save resulting masks.", required=True)
-    arg("-t", "--tta", help="Test time augmentation.", default=None, choices=[None, "d4", "lr"])
+    arg(
+        "-o",
+        "--output_path",
+        type=Path,
+        help="Path to save resulting masks.",
+        required=True,
+    )
+    arg(
+        "-t",
+        "--tta",
+        help="Test time augmentation.",
+        default=None,
+        choices=[None, "d4", "lr"],
+    )
     arg("-ph", "--patch-height", help="height of patch size", type=int, default=512)
     arg("-pw", "--patch-width", help="width of patch size", type=int, default=512)
     arg("-b", "--batch-size", help="batch size", type=int, default=2)
-    arg("-d", "--dataset", help="dataset", default="pv", choices=["pv", "landcoverai", "uavid", "building"])
+    arg(
+        "-d",
+        "--dataset",
+        help="dataset",
+        default="pv",
+        choices=["pv", "landcoverai", "uavid", "building"],
+    )
     return parser.parse_args()
 
 
@@ -101,9 +125,14 @@ def get_img_padded(image, patch_size):
     # print(oh, ow, rh, rw, height_pad, width_pad)
     h, w = oh + height_pad, ow + width_pad
 
-    pad = albu.PadIfNeeded(min_height=h, min_width=w, position='bottom_right',
-                           border_mode=0, value=[0, 0, 0])(image=image)
-    img_pad = pad['image']
+    pad = albu.PadIfNeeded(
+        min_height=h,
+        min_width=w,
+        position="bottom_right",
+        border_mode=0,
+        value=[0, 0, 0],
+    )(image=image)
+    img_pad = pad["image"]
     return img_pad, height_pad, width_pad
 
 
@@ -116,7 +145,7 @@ class InferenceDataset(Dataset):
         img = self.tile_list[index]
         img_id = index
         aug = self.transform(image=img)
-        img = aug['image']
+        img = aug["image"]
         img = torch.from_numpy(img).permute(2, 0, 1).float()
         results = dict(img_id=img_id, img=img)
         return results
@@ -135,11 +164,45 @@ def make_dataset_for_one_huge_image(img_path, patch_size):
 
     for x in range(0, output_height, patch_size[0]):
         for y in range(0, output_width, patch_size[1]):
-            image_tile = image_pad[x:x+patch_size[0], y:y+patch_size[1]]
+            image_tile = image_pad[x : x + patch_size[0], y : y + patch_size[1]]
             tile_list.append(image_tile)
 
     dataset = InferenceDataset(tile_list=tile_list)
-    return dataset, width_pad, height_pad, output_width, output_height, image_pad, img.shape
+    return (
+        dataset,
+        width_pad,
+        height_pad,
+        output_width,
+        output_height,
+        image_pad,
+        img.shape,
+    )
+
+
+def sliding_window_inference(model, image, num_classes, window_size=1024, stride=128):
+    _, _, H, W = image.shape
+    pad_h = (window_size - H % window_size) % window_size
+    pad_w = (window_size - W % window_size) % window_size
+    image = nn.functional.pad(image, (0, pad_w, 0, pad_h), mode="reflect")
+    _, _, padded_H, padded_W = image.shape
+
+    # Initialize prediction tensor with the correct number of classes
+    prediction = torch.zeros(
+        (image.shape[0], num_classes, padded_H, padded_W), device=image.device
+    )
+    count = torch.zeros((1, 1, padded_H, padded_W), device=image.device)
+
+    for h in range(0, padded_H - window_size + 1, stride):
+        for w in range(0, padded_W - window_size + 1, stride):
+            window = image[:, :, h : h + window_size, w : w + window_size]
+            with torch.no_grad():
+                output = model(window)
+            prediction[:, :, h : h + window_size, w : w + window_size] += output
+            count[:, :, h : h + window_size, w : w + window_size] += 1
+
+    prediction /= count
+    prediction = prediction[:, :, :H, :W]  # Remove padding
+    return prediction
 
 
 def main():
@@ -147,18 +210,16 @@ def main():
     seed_everything(42)
     patch_size = (args.patch_height, args.patch_width)
     config = py2cfg(args.config_path)
-    model = Supervision_Train.load_from_checkpoint(os.path.join(config.weights_path, config.test_weights_name+'.ckpt'), config=config)
+    model = Supervision_Train.load_from_checkpoint(
+        os.path.join(config.weights_path, config.test_weights_name + ".ckpt"),
+        config=config,
+    )
 
     model.cuda()
     model.eval()
 
     if args.tta == "lr":
-        transforms = tta.Compose(
-            [
-                tta.HorizontalFlip(),
-                tta.VerticalFlip()
-            ]
-        )
+        transforms = tta.Compose([tta.HorizontalFlip(), tta.VerticalFlip()])
         model = tta.SegmentationTTAWrapper(model, transforms)
     elif args.tta == "d4":
         transforms = tta.Compose(
@@ -175,32 +236,48 @@ def main():
     img_paths = []
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    for ext in ('*.tif', '*.png', '*.jpg'):
+    for ext in ("*.tif", "*.png", "*.jpg"):
         img_paths.extend(glob.glob(os.path.join(args.image_path, ext)))
     img_paths.sort()
     # print(img_paths)
     for img_path in img_paths:
-        img_name = img_path.split('/')[-1]
+        img_name = img_path.split("/")[-1]
         # print('origin mask', original_mask.shape)
-        dataset, width_pad, height_pad, output_width, output_height, img_pad, img_shape = \
-            make_dataset_for_one_huge_image(img_path, patch_size)
+        (
+            dataset,
+            width_pad,
+            height_pad,
+            output_width,
+            output_height,
+            img_pad,
+            img_shape,
+        ) = make_dataset_for_one_huge_image(img_path, patch_size)
         # print('img_padded', img_pad.shape)
         output_mask = np.zeros(shape=(output_height, output_width), dtype=np.uint8)
         output_tiles = []
         k = 0
         with torch.no_grad():
-            dataloader = DataLoader(dataset=dataset, batch_size=args.batch_size,
-                                    drop_last=False, shuffle=False)
+            dataloader = DataLoader(
+                dataset=dataset,
+                batch_size=args.batch_size,
+                drop_last=False,
+                shuffle=False,
+            )
             for input in tqdm(dataloader):
-                # raw_prediction NxCxHxW
-                raw_predictions = model(input['img'].cuda())
-                # print('raw_pred shape:', raw_predictions.shape)
-                raw_predictions = nn.Softmax(dim=1)(raw_predictions)
-                # input_images['features'] NxCxHxW C=3
-                predictions = raw_predictions.argmax(dim=1)
-                image_ids = input['img_id']
-                # print('prediction', predictions.shape)
-                # print(np.unique(predictions))
+
+                image = input["img"].cuda()
+                image_ids = input["img_id"]
+
+                # Perform sliding window inference
+                raw_predictions = sliding_window_inference(
+                    model, image, config.num_classes
+                )
+
+                # Apply softmax to get class probabilities
+                class_probabilities = nn.Softmax(dim=1)(raw_predictions)
+
+                # Get final predictions (class with highest probability for each pixel)
+                predictions = class_probabilities.argmax(dim=1)
 
                 for i in range(predictions.shape[0]):
                     mask = predictions[i].cpu().numpy()
@@ -208,20 +285,22 @@ def main():
 
         for m in range(0, output_height, patch_size[0]):
             for n in range(0, output_width, patch_size[1]):
-                output_mask[m:m + patch_size[0], n:n + patch_size[1]] = output_tiles[k][0]
+                output_mask[m : m + patch_size[0], n : n + patch_size[1]] = (
+                    output_tiles[k][0]
+                )
                 # print(output_tiles[k][1])
                 k = k + 1
 
-        output_mask = output_mask[-img_shape[0]:, -img_shape[1]:]
+        output_mask = output_mask[-img_shape[0] :, -img_shape[1] :]
 
         # print('mask', output_mask.shape)
-        if args.dataset == 'landcoverai':
+        if args.dataset == "landcoverai":
             output_mask = landcoverai_to_rgb(output_mask)
-        elif args.dataset == 'pv':
+        elif args.dataset == "pv":
             output_mask = pv2rgb(output_mask)
-        elif args.dataset == 'uavid':
+        elif args.dataset == "uavid":
             output_mask = uavid2rgb(output_mask)
-        elif args.dataset == 'building':
+        elif args.dataset == "building":
             output_mask = building_to_rgb(output_mask)
         else:
             output_mask = output_mask

@@ -55,8 +55,8 @@ airs
 │   │   ├── test (processed)
 │   ├── sites
 │   │   ├── site name
-│   │   |   ├── TOP (True Orthophoto)
-│   │   |   ├── SHP (Reference Shapefile)
+│   │   |   ├── TOP (True Orthophoto)     Name: TOP_id.tif
+│   │   |   ├── SHP (Reference Shapefile) Name: site_name_TOF.shp
 ```
 
 ## Install
@@ -92,7 +92,7 @@ python GeoSeg/tools/create_masks.py --state "site name" --epsg "EPSG:25833"
 ```
 
 
-Define the training, validation and test split (here 90, 5, 5). This will split the data so that all classes are equally distributed.
+Define the training, validation and test split (here 90, 5, 5). This will split the data so that all classes are equally distributed. It is set up for 100 files.
 ```
 python GeoSeg/tools/data_statistics.py --state "site name"
 ```
