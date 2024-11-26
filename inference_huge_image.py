@@ -271,6 +271,8 @@ def main():
 
         cv2.imwrite(output_image, output_mask)
 
+        rasterio_image = rasterio.open(output_image).read(1)
+
         # Find the corresponding image to get geospatial information
         with rasterio.open(img_path) as src:
             # Get the geospatial information from the corresponding image
@@ -278,7 +280,7 @@ def main():
 
         # Save the stitched image as a geotiff with the updated geospatial information
         with rasterio.open(output_image, "w", **geospatial_info) as dst:
-            dst.write(output_mask, indexes=1)
+            dst.write(rasterio_image, indexes=1)
 
         # Save the geotif as shapefile
         # os.system(
