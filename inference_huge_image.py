@@ -165,7 +165,7 @@ def make_dataset_for_one_huge_image(img_path):
     )
 
 
-def sliding_window_inference(model, image, num_classes, window_size=1024, stride=128):
+def sliding_window_inference(model, image, num_classes, window_size=1024, stride=256):
     _, _, H, W = image.shape
     pad_h = (window_size - H % window_size) % window_size
     pad_w = (window_size - W % window_size) % window_size
@@ -266,6 +266,8 @@ def main():
                 for i in range(predictions.shape[0]):
                     mask = predictions[i].cpu().numpy()
                     results.append((mask, image_ids[i].cpu().numpy()))
+
+        print(results)
 
         cv2.imwrite(os.path.join(args.output_path, img_name), results[0])
 
