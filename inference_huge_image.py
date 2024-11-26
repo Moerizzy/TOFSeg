@@ -281,9 +281,9 @@ def main():
             dst.write(output_mask, indexes=1)
 
         # Save the geotif as shapefile
-        os.system(
-            f"gdal_polygonize.py -q {output_image} -f 'ESRI Shapefile' {output_image.replace('.png', '.shp')}"
-        )
+        # os.system(
+        #     f"gdal_polygonize.py -q {output_image} -f 'ESRI Shapefile' {output_image.replace('.png', '.shp')}"
+        # )
 
 
 if __name__ == "__main__":
