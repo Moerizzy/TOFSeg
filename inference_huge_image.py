@@ -29,56 +29,6 @@ def seed_everything(seed):
     torch.backends.cudnn.benchmark = True
 
 
-def building_to_rgb(mask):
-    h, w = mask.shape[0], mask.shape[1]
-    mask_rgb = np.zeros(shape=(h, w, 3), dtype=np.uint8)
-    mask_convert = mask[np.newaxis, :, :]
-    mask_rgb[np.all(mask_convert == 0, axis=0)] = [255, 255, 255]
-    mask_rgb[np.all(mask_convert == 1, axis=0)] = [0, 0, 0]
-    return mask_rgb
-
-
-def pv2rgb(mask):  # Potsdam and vaihingen
-    h, w = mask.shape[0], mask.shape[1]
-    mask_rgb = np.zeros(shape=(h, w, 3), dtype=np.uint8)
-    mask_convert = mask[np.newaxis, :, :]
-    mask_rgb[np.all(mask_convert == 3, axis=0)] = [0, 255, 0]
-    mask_rgb[np.all(mask_convert == 0, axis=0)] = [255, 255, 255]
-    mask_rgb[np.all(mask_convert == 1, axis=0)] = [255, 0, 0]
-    mask_rgb[np.all(mask_convert == 2, axis=0)] = [255, 255, 0]
-    mask_rgb[np.all(mask_convert == 4, axis=0)] = [0, 204, 255]
-    mask_rgb[np.all(mask_convert == 5, axis=0)] = [0, 0, 255]
-    return mask_rgb
-
-
-def landcoverai_to_rgb(mask):
-    w, h = mask.shape[0], mask.shape[1]
-    mask_rgb = np.zeros(shape=(w, h, 3), dtype=np.uint8)
-    mask_convert = mask[np.newaxis, :, :]
-    mask_rgb[np.all(mask_convert == 3, axis=0)] = [255, 255, 255]
-    mask_rgb[np.all(mask_convert == 0, axis=0)] = [233, 193, 133]
-    mask_rgb[np.all(mask_convert == 1, axis=0)] = [255, 0, 0]
-    mask_rgb[np.all(mask_convert == 2, axis=0)] = [0, 255, 0]
-    mask_rgb = cv2.cvtColor(mask_rgb, cv2.COLOR_RGB2BGR)
-    return mask_rgb
-
-
-def uavid2rgb(mask):
-    h, w = mask.shape[0], mask.shape[1]
-    mask_rgb = np.zeros(shape=(h, w, 3), dtype=np.uint8)
-    mask_convert = mask[np.newaxis, :, :]
-    mask_rgb[np.all(mask_convert == 0, axis=0)] = [128, 0, 0]
-    mask_rgb[np.all(mask_convert == 1, axis=0)] = [128, 64, 128]
-    mask_rgb[np.all(mask_convert == 2, axis=0)] = [0, 128, 0]
-    mask_rgb[np.all(mask_convert == 3, axis=0)] = [128, 128, 0]
-    mask_rgb[np.all(mask_convert == 4, axis=0)] = [64, 0, 128]
-    mask_rgb[np.all(mask_convert == 5, axis=0)] = [192, 0, 192]
-    mask_rgb[np.all(mask_convert == 6, axis=0)] = [64, 64, 0]
-    mask_rgb[np.all(mask_convert == 7, axis=0)] = [0, 0, 0]
-    mask_rgb = cv2.cvtColor(mask_rgb, cv2.COLOR_RGB2BGR)
-    return mask_rgb
-
-
 def get_args():
     parser = argparse.ArgumentParser()
     arg = parser.add_argument
@@ -104,16 +54,9 @@ def get_args():
         default=None,
         choices=[None, "d4", "lr"],
     )
-    arg("-ph", "--patch-height", help="height of patch size", type=int, default=512)
-    arg("-pw", "--patch-width", help="width of patch size", type=int, default=512)
+    arg("-st", "--stride", help="stride", type=int, default=256)
+    arg("-ps", "--patch-size", help="patch size", type=int, default=1024)
     arg("-b", "--batch-size", help="batch size", type=int, default=2)
-    arg(
-        "-d",
-        "--dataset",
-        help="dataset",
-        default="pv",
-        choices=["pv", "landcoverai", "uavid", "building"],
-    )
     return parser.parse_args()
 
 
@@ -254,7 +197,7 @@ def main():
 
                 # Perform sliding window inference
                 raw_predictions = sliding_window_inference(
-                    model, image, config.num_classes
+                    model, image, config.num_classes, args.patch_size, args.stride
                 )
 
                 # Apply softmax to get class probabilities
