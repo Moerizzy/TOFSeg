@@ -267,7 +267,7 @@ def main():
                     mask = predictions[i].cpu().numpy()
                     results.append((mask, image_ids[i].cpu().numpy()))
 
-            cv2.imwrite(os.path.join(args.output_path, img_name), results)
+        cv2.imwrite(os.path.join(args.output_path, img_name), results[0])
 
 
 if __name__ == "__main__":
