@@ -278,7 +278,7 @@ def main():
 
         # Save the stitched image as a geotiff with the updated geospatial information
         with rasterio.open(output_image, "w", **geospatial_info) as dst:
-            dst.write(output_image, indexes=1)
+            dst.write(output_mask, indexes=1)
 
         # Save the geotif as shapefile
         os.system(
