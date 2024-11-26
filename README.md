@@ -1,10 +1,3 @@
-## Version 2.0 (stable)
-
-[Welcome to my homepage!](https://WangLibo1995.github.io)
-
-## News 
-- Pretrained Weights of backbones can be access from [Google Drive](https://drive.google.com/drive/folders/1ELpFKONJZbXmwB5WCXG7w42eHtrXzyPn?usp=sharing)
-
 ## Introduction
 
 **TOFSeg** is an open-source  semantic segmentation toolbox based on PyTorch, [pytorch lightning](https://www.pytorchlightning.ai/) and [timm](https://github.com/rwightman/pytorch-image-models), 
