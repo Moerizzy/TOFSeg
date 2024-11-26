@@ -13,4 +13,3 @@ ftfy
 regex
 geopandas
 rasterio
-catalyst
