@@ -44,7 +44,6 @@ def stitch_images_grid(image_group, geospatial_path, output_path):
     with rasterio.open(geospatial_path) as src:
         # Get the geospatial information from the corresponding image
         geospatial_info = src.meta
-        geospatial_info.update(count=1)  # Keep only one channel
 
     # Save the stitched image as a geotiff with the updated geospatial information
     with rasterio.open(

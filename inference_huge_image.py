@@ -277,6 +277,7 @@ def main():
         with rasterio.open(img_path) as src:
             # Get the geospatial information from the corresponding image
             geospatial_info = src.meta
+            geospatial_info.update(count=1)  # Keep only one channel
 
         # Save the stitched image as a geotiff with the updated geospatial information
         with rasterio.open(output_image, "w", **geospatial_info) as dst:
