@@ -238,7 +238,6 @@ def main():
         output_width = img_shape[1]
 
         output_mask = np.zeros(shape=(output_height, output_width), dtype=np.uint8)
-        results = []
         k = 0
         with torch.no_grad():
             dataloader = DataLoader(
@@ -265,11 +264,10 @@ def main():
 
                 for i in range(predictions.shape[0]):
                     mask = predictions[i].cpu().numpy()
-                    results.append((mask, image_ids[i].cpu().numpy()))
+                    output_mask = mask
+                    # results.append((mask, image_ids[i].cpu().numpy()))
 
-        print(results.shape)
-
-        cv2.imwrite(os.path.join(args.output_path, img_name), results[0][0])
+        cv2.imwrite(os.path.join(args.output_path, img_name), output_mask)
 
 
 if __name__ == "__main__":
