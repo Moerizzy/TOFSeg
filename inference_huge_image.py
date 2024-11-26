@@ -282,7 +282,7 @@ def main():
 
         # Save the geotif as shapefile
         os.system(
-            f"gdal_polygonize.py {output_image} -f 'ESRI Shapefile' {output_image.replace('.png', '.shp')}"
+            f"gdal_polygonize.py -q {output_image} -f 'ESRI Shapefile' {output_image.replace('.png', '.shp')}"
         )
 
 
