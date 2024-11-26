@@ -232,13 +232,13 @@ def main():
         (
             dataset,
             img_shape,
-        ) = make_dataset_for_one_huge_image(img_path, patch_size)
+        ) = make_dataset_for_one_huge_image(img_path)
 
         output_height = img_shape[0]
         output_width = img_shape[1]
 
         output_mask = np.zeros(shape=(output_height, output_width), dtype=np.uint8)
-        output_tiles = []
+        results = []
         k = 0
         with torch.no_grad():
             dataloader = DataLoader(
@@ -265,32 +265,9 @@ def main():
 
                 for i in range(predictions.shape[0]):
                     mask = predictions[i].cpu().numpy()
-                    output_tiles.append((mask, image_ids[i].cpu().numpy()))
+                    results.append((mask, image_ids[i].cpu().numpy()))
 
-        for m in range(0, output_height, patch_size[0]):
-            for n in range(0, output_width, patch_size[1]):
-                output_mask[m : m + patch_size[0], n : n + patch_size[1]] = (
-                    output_tiles[k][0]
-                )
-                # print(output_tiles[k][1])
-                k = k + 1
-
-        output_mask = output_mask[-img_shape[0] :, -img_shape[1] :]
-
-        # print('mask', output_mask.shape)
-        if args.dataset == "landcoverai":
-            output_mask = landcoverai_to_rgb(output_mask)
-        elif args.dataset == "pv":
-            output_mask = pv2rgb(output_mask)
-        elif args.dataset == "uavid":
-            output_mask = uavid2rgb(output_mask)
-        elif args.dataset == "building":
-            output_mask = building_to_rgb(output_mask)
-        else:
-            output_mask = output_mask
-        # print(img_shape, output_mask.shape)
-        # assert img_shape == output_mask.shape
-        cv2.imwrite(os.path.join(args.output_path, img_name), output_mask)
+            cv2.imwrite(os.path.join(args.output_path, img_name), results)
 
 
 if __name__ == "__main__":
