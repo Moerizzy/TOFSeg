@@ -57,26 +57,6 @@ def get_args():
     return parser.parse_args()
 
 
-def get_img_padded(image, patch_size):
-    oh, ow = image.shape[0], image.shape[1]
-    rh, rw = oh % patch_size[0], ow % patch_size[1]
-
-    width_pad = 0 if rw == 0 else patch_size[1] - rw
-    height_pad = 0 if rh == 0 else patch_size[0] - rh
-    # print(oh, ow, rh, rw, height_pad, width_pad)
-    h, w = oh + height_pad, ow + width_pad
-
-    pad = albu.PadIfNeeded(
-        min_height=h,
-        min_width=w,
-        position="bottom_right",
-        border_mode=0,
-        value=[0, 0, 0],
-    )(image=image)
-    img_pad = pad["image"]
-    return img_pad, height_pad, width_pad
-
-
 class InferenceDataset(Dataset):
     def __init__(self, tile_list=None, transform=albu.Normalize()):
         self.tile_list = tile_list
@@ -135,7 +115,6 @@ def sliding_window_inference(model, image, num_classes, window_size=1024, stride
 def main():
     args = get_args()
     seed_everything(42)
-    patch_size = (args.patch_height, args.patch_width)
     config = py2cfg(args.config_path)
     model = Supervision_Train.load_from_checkpoint(
         os.path.join(config.weights_path, config.test_weights_name + ".ckpt"),

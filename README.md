@@ -150,10 +150,37 @@ python GeoSeg/train_supervision.py -c GeoSeg/config/tof/ftunetformer.py
 
 "--rgb" denotes whether to output masks in RGB format
 
-**TOF**
-
 ```
 python GeoSeg/tof_test.py -c GeoSeg/config/tof/unetformer.py -o fig_results/tof/unetformer --rgb
+```
+
+## Inference on Huge Areas
+
+This function takes an image folder and performs inference. It predicts overlapping predictions, which can be adjusted using "-st" and "-ps". These are merged by averaging the probability scores and output as a georeferenced GeoTIF and ShapeFile in the size of the original images.
+
+"i" denotes the input image folder 
+
+"-c" denotes the path of the config, Use different **config** to test different models. 
+
+"-o" denotes the output path 
+
+"-t" denotes the test time augmentation (TTA), can be [None, 'lr', 'd4'], default is None, 'lr' is flip TTA, 'd4' is multiscale TTA
+
+"-st" denotes the stride in pixels for each patch that will be predicted.
+
+"-ps" denotes the patch size that will be predicted
+
+"-b" denoted the batch size
+
+
+```
+python GeoSeg/inference_huge_image.py \
+-i data/inference/images \
+-c GeoSeg/config/tof/ftunetformer.py \
+-o data/inference/mask \
+-st 128 \
+-ps 1024 \
+-b 2 \
 ```
 
 ## Citation
