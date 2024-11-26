@@ -178,7 +178,7 @@ python GeoSeg/inference_huge_image.py \
 -i data/inference/images \
 -c GeoSeg/config/tof/ftunetformer.py \
 -o data/inference/mask \
--st 128 \
+-st 256 \
 -ps 1024 \
 -b 2 \
 ```
