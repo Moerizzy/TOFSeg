@@ -1,14 +1,11 @@
 import argparse
 from pathlib import Path
 import glob
-from PIL import Image
 import ttach as tta
 import cv2
 import numpy as np
 import torch
 import albumentations as albu
-from catalyst.dl import SupervisedRunner
-from skimage.morphology import remove_small_holes, remove_small_objects
 from tools.cfg import py2cfg
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
