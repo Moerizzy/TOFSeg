@@ -154,27 +154,13 @@ class InferenceDataset(Dataset):
         return len(self.tile_list)
 
 
-def make_dataset_for_one_huge_image(img_path, patch_size):
+def make_dataset_for_one_huge_image(img_path):
     img = cv2.imread(img_path, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    tile_list = []
-    image_pad, height_pad, width_pad = get_img_padded(img.copy(), patch_size)
 
-    output_height, output_width = image_pad.shape[0], image_pad.shape[1]
-
-    for x in range(0, output_height, patch_size[0]):
-        for y in range(0, output_width, patch_size[1]):
-            image_tile = image_pad[x : x + patch_size[0], y : y + patch_size[1]]
-            tile_list.append(image_tile)
-
-    dataset = InferenceDataset(tile_list=tile_list)
+    dataset = InferenceDataset(tile_list=[img])
     return (
         dataset,
-        width_pad,
-        height_pad,
-        output_width,
-        output_height,
-        image_pad,
         img.shape,
     )
 
@@ -245,14 +231,12 @@ def main():
         # print('origin mask', original_mask.shape)
         (
             dataset,
-            width_pad,
-            height_pad,
-            output_width,
-            output_height,
-            img_pad,
             img_shape,
         ) = make_dataset_for_one_huge_image(img_path, patch_size)
-        # print('img_padded', img_pad.shape)
+
+        output_height = img_shape[0]
+        output_width = img_shape[1]
+
         output_mask = np.zeros(shape=(output_height, output_width), dtype=np.uint8)
         output_tiles = []
         k = 0
