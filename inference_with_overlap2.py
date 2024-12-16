@@ -73,7 +73,7 @@ class InferenceDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
         print(neighbors)
-        combined_image = combine_neighbors(neighbors, image_path, (3, 10000, 10000))
+        combined_image = combine_neighbors(neighbors, image_path, (3, 6000, 6000))
 
         # Check basic statistics of combined_image
         print("Combined image min value:", combined_image.min())
