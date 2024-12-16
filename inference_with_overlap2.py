@@ -73,6 +73,12 @@ class InferenceDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
         combined_image = combine_neighbors(neighbors, (3, 5000, 5000))
+
+        # Check basic statistics of combined_image
+        print("Combined image min value:", combined_image.min())
+        print("Combined image max value:", combined_image.max())
+        print("Combined image unique values:", np.unique(combined_image))
+
         image = np.moveaxis(combined_image, 0, -1).astype(np.uint8)
 
         # Print shape and data type to verify
