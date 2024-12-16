@@ -11,9 +11,9 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from train_supervision import *
-import random
 import os
 import rasterio
+from rasterio.merge import merge
 
 # 1. Load the model folder
 # 2. Load a image and find all his neighbors
@@ -161,7 +161,7 @@ def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
     src_files = [rasterio.open(neighbor) for neighbor in valid_neighbors]
 
     # Merge tiles
-    mosaic, transform = rasterio.merge(src_files, nodata=nodata_value)
+    mosaic, transform = merge(src_files, nodata=nodata_value)
 
     # Ensure merged data fits into the fixed output size
     min_bands = min(mosaic.shape[0], output_shape[0])
