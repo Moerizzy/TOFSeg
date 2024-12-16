@@ -440,13 +440,7 @@ class GeoTIFFProcessor:
 
         # Process tiles
         with multiprocessing.Pool(processes=max_workers) as pool:
-            pool.map(self.timed_process_tile, tiles)
-
-    def timed_process_tile(self, tile):
-        start_time = time.time()
-        self.process_tile(tile)
-        end_time = time.time()
-        logger.info(f"Processing time for {tile}: {end_time - start_time:.2f} seconds")
+            pool.map(self.process_tile, tiles)
 
 
 def main():
