@@ -485,7 +485,7 @@ def main():
 
     # Create processor and process tiles
     processor = GeoTIFFProcessor(
-        input_folder=args.input, output_folder=args.output, model_path=args.config
+        input_folder=args.input, output_folder=args.output, config=args.config
     )
     processor.process_all_tiles(max_workers=args.workers)
 
