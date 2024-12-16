@@ -72,7 +72,7 @@ class InferenceDataset(Dataset):
         image_name = self.image_files[index]
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
-        combined_image = combine_neighbors(neighbors)
+        combined_image = combine_neighbors(neighbors, (3, 5000, 5000))
         image = cv2.imread(combined_image, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if self.transform:
@@ -103,16 +103,48 @@ def find_neighbors(image_path, radius=500):
     return neighbors
 
 
-def combine_neighbors(neighbors):
-    # Combine neighboring GeoTiff-Dateien
-    combined = []
-    for neighbor in neighbors:
-        with rasterio.open(neighbor) as src:
-            combined.append(src.read(1))
-            combined.append(src.read(2))
-            combined.append(src.read(3))
-            combined = np.array(combined)
-    combined = combined[:, 2500:-2500, 2500:-2500]
+def combine_neighbors(neighbors, output_shape, nodata_value=0):
+    """
+    Combine neighboring GeoTIFF files into a fixed-size mosaic.
+
+    Parameters:
+    - neighbors: List of file paths to GeoTIFF files.
+    - output_shape: Tuple (bands, height, width) specifying the fixed output size.
+    - nodata_value: Value to fill missing areas (default: 0).
+
+    Returns:
+    - combined: A numpy array of the fixed size with combined GeoTIFF data.
+    """
+    # Create a blank canvas for the output
+    combined = np.full(output_shape, nodata_value, dtype=np.float32)
+
+    # Filter valid files
+    valid_neighbors = [neighbor for neighbor in neighbors if os.path.exists(neighbor)]
+
+    if not valid_neighbors:
+        # If no valid files, return the blank canvas
+        return combined
+
+    # Open valid neighbors
+    src_files = [rasterio.open(neighbor) for neighbor in valid_neighbors]
+
+    # Merge tiles
+    mosaic, transform = rasterio.merge(src_files, nodata=nodata_value)
+
+    # Ensure merged data fits into the fixed output size
+    min_bands = min(mosaic.shape[0], output_shape[0])
+    min_height = min(mosaic.shape[1], output_shape[1])
+    min_width = min(mosaic.shape[2], output_shape[2])
+
+    # Copy the merged data into the center of the blank canvas
+    combined[:min_bands, :min_height, :min_width] = mosaic[
+        :min_bands, :min_height, :min_width
+    ]
+
+    # Close all open files
+    for src in src_files:
+        src.close()
+
     return combined
 
 
