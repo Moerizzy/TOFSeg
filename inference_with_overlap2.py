@@ -72,6 +72,7 @@ class InferenceDataset(Dataset):
         image_name = self.image_files[index]
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
+        print(neighbors)
         combined_image = combine_neighbors(neighbors, (3, 5000, 5000))
 
         # Check basic statistics of combined_image
