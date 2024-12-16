@@ -73,7 +73,7 @@ class InferenceDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
         print(neighbors)
-        combined_image = combine_neighbors(neighbors, (3, 5000, 5000))
+        combined_image = combine_neighbors(neighbors, image_path, (3, 5000, 5000))
 
         # Check basic statistics of combined_image
         print("Combined image min value:", combined_image.min())
@@ -146,13 +146,15 @@ def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
 
     if not valid_neighbors:
         # If no valid files, place the center image in the center of the blank canvas
-        center_h = (output_shape[1] - center_image.shape[1]) // 2
-        center_w = (output_shape[2] - center_image.shape[2]) // 2
+        with rasterio.open(center_image) as src:
+            center_data = src.read()
+        center_h = (output_shape[1] - center_data.shape[1]) // 2
+        center_w = (output_shape[2] - center_data.shape[2]) // 2
         combined[
             :,
-            center_h : center_h + center_image.shape[1],
-            center_w : center_w + center_image.shape[2],
-        ] = center_image
+            center_h : center_h + center_data.shape[1],
+            center_w : center_w + center_data.shape[2],
+        ] = center_data
         return combined
 
     # Open valid neighbors
