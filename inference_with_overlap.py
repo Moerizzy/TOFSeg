@@ -9,6 +9,8 @@ import multiprocessing
 import argparse
 import time
 import torch  # Assuming a PyTorch model, adjust as needed
+from train_supervision import *
+from tools.cfg import py2cfg
 
 # Configure logging
 logging.basicConfig(
@@ -18,18 +20,18 @@ logger = logging.getLogger(__name__)
 
 
 class GeoTIFFProcessor:
-    def __init__(self, input_folder: str, output_folder: str, model_path: str):
+    def __init__(self, input_folder: str, output_folder: str, config: str):
         """
         Initialize the GeoTIFF processor with input, output folders, and model.
 
         Args:
             input_folder (str): Path to folder containing input GeoTIFF tiles
             output_folder (str): Path to folder for processed outputs
-            model_path (str): Path to the trained model file
+            config_path (str): Path to the trained model file
         """
         self.input_folder = input_folder
         self.output_folder = output_folder
-        self.model_path = model_path
+        self.config = py2cfg(config)
 
         # Ensure output folder exists
         os.makedirs(output_folder, exist_ok=True)
@@ -46,7 +48,12 @@ class GeoTIFFProcessor:
         """
         try:
             # Example for PyTorch model loading
-            model = torch.load(self.model_path)
+            model = Supervision_Train.load_from_checkpoint(
+                os.path.join(
+                    self.config.weights_path, self.config.test_weights_name + ".ckpt"
+                ),
+                config=self.config,
+            )
             model.eval()  # Set to evaluation mode
             return model
         except Exception as e:
@@ -243,7 +250,12 @@ class GeoTIFFProcessor:
         """
         try:
             # Example for PyTorch model loading
-            model = torch.load(self.model_path)
+            model = Supervision_Train.load_from_checkpoint(
+                os.path.join(
+                    self.config.weights_path, self.config.test_weights_name + ".ckpt"
+                ),
+                config=self.config,
+            )
             model.cuda()  # Move to GPU
             model.eval()  # Set to evaluation mode
             return model
@@ -459,9 +471,7 @@ def main():
         required=True,
         help="Path to output folder for processed tiles",
     )
-    parser.add_argument(
-        "-m", "--model", required=True, help="Path to the trained model file"
-    )
+    parser.add_argument("-c", "--config", required=True, help="Path to the config file")
     parser.add_argument(
         "-w",
         "--workers",
@@ -475,7 +485,7 @@ def main():
 
     # Create processor and process tiles
     processor = GeoTIFFProcessor(
-        input_folder=args.input, output_folder=args.output, model_path=args.model
+        input_folder=args.input, output_folder=args.output, model_path=args.config
     )
     processor.process_all_tiles(max_workers=args.workers)
 
