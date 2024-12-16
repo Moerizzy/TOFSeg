@@ -480,8 +480,11 @@ def main():
         input_folder=args.input, output_folder=args.output, config=args.config
     )
     tiles = processor.process_all_tiles()
-    with multiprocessing.Pool(processes=max_workers) as pool:
-        pool.map(processor.process_tile, tiles)
+    for tile in tiles:
+        start_time = time.time()
+        processor.process_tile(tile)
+        end_time = time.time()
+        logger.info(f"Processing time for {tile}: {end_time - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":
