@@ -147,6 +147,8 @@ class GeoTIFFProcessor:
         Returns:
             List of adjacent tile paths
         """
+
+        print(tile_to_geom)
         with rasterio.open(current_tile_path) as src:
             current_bounds = box(*src.bounds)
 
