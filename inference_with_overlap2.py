@@ -74,6 +74,14 @@ class InferenceDataset(Dataset):
         neighbors = find_neighbors(image_path)
         combined_image = combine_neighbors(neighbors, (3, 5000, 5000))
         image = np.moveaxis(combined_image, 0, -1).astype(np.uint8)
+
+        # Print shape and data type to verify
+        print("Image shape:", image.shape)  # Should be (5000, 5000, 3) for RGB image
+        print("Image data type:", image.dtype)  # Should be uint8
+
+        # Verify that pixel values are in the correct range (0-255 for uint8)
+        print("Min pixel value:", image.min())
+        print("Max pixel value:", image.max())
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if self.transform:
             augmented = self.transform(image=image)
