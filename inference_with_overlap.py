@@ -133,41 +133,45 @@ class GeoTIFFProcessor:
     def get_adjacent_tiles(
         self,
         spatial_index: STRtree,
-        tile_to_geom: Dict[box, str],
+        tile_to_geom: Dict[str, str],
         current_tile_path: str,
     ) -> List[str]:
         """
         Find directly adjacent tiles.
 
         Args:
-            spatial_index (STRtree): Spatial index of tiles
-            tile_to_geom (Dict[box, str]): Mapping of geometries to tile paths
-            current_tile_path (str): Path of current tile being processed
+            spatial_index (STRtree): Spatial index of tiles.
+            tile_to_geom (Dict[str, str]): Mapping of WKT geometries to tile paths.
+            current_tile_path (str): Path of current tile being processed.
 
         Returns:
-            List of adjacent tile paths
+            List of adjacent tile paths.
         """
+        try:
+            with rasterio.open(current_tile_path) as src:
+                current_bounds = box(*src.bounds)
 
-        with rasterio.open(current_tile_path) as src:
-            current_bounds = box(*src.bounds)
+            adjacent_tiles = []
+            for geom in spatial_index.query(current_bounds):
+                geom_wkt = geom.wkt
+                if geom_wkt not in tile_to_geom:
+                    logger.warning(f"Missing geometry in tile_to_geom: {geom}")
+                    continue
 
-        print(current_bounds.bounds)
+                candidate_tile_path = tile_to_geom[geom_wkt]
+                if candidate_tile_path != current_tile_path:
+                    with rasterio.open(candidate_tile_path) as other_src:
+                        other_bounds = box(*other_src.bounds)
+                        if self.tiles_are_adjacent(
+                            current_bounds.bounds, other_bounds.bounds
+                        ):
+                            adjacent_tiles.append(candidate_tile_path)
 
-        adjacent_tiles = []
-        for geom in spatial_index.query(current_bounds):
-            print(geom)
-            candidate_tile_path = tile_to_geom[geom]
+            return adjacent_tiles
 
-            if candidate_tile_path != current_tile_path:
-                with rasterio.open(candidate_tile_path) as other_src:
-                    other_bounds = box(*other_src.bounds)
-
-                    if self.tiles_are_adjacent(
-                        current_bounds.bounds, other_bounds.bounds
-                    ):
-                        adjacent_tiles.append(candidate_tile_path)
-
-        return adjacent_tiles
+        except Exception as e:
+            logger.error(f"Error finding adjacent tiles for {current_tile_path}: {e}")
+            return []
 
     def merge_adjacent_tiles(
         self, center_tile: str, adjacent_tiles: List[str]
