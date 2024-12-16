@@ -469,6 +469,7 @@ def main():
 
     # Parse arguments
     args = parser.parse_args()
+    max_workers = args.workers
 
     # Determine number of workers
     if max_workers is None:
