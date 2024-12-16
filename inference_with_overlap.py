@@ -155,7 +155,7 @@ class GeoTIFFProcessor:
 
         adjacent_tiles = []
         for geom in spatial_index.query(current_bounds):
-            print(geom.bounds)
+            print(geom)
             candidate_tile_path = tile_to_geom[geom]
 
             if candidate_tile_path != current_tile_path:
