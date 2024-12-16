@@ -73,7 +73,7 @@ class InferenceDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
         combined_image = combine_neighbors(neighbors, (3, 5000, 5000))
-        image = cv2.imread(combined_image, cv2.IMREAD_COLOR)
+        image = np.moveaxis(combined_image, 0, -1).astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if self.transform:
             augmented = self.transform(image=image)
