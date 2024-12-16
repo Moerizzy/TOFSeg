@@ -73,7 +73,7 @@ class InferenceDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_name)
         neighbors = find_neighbors(image_path)
         print(neighbors)
-        combined_image = combine_neighbors(neighbors, image_path, (3, 5000, 5000))
+        combined_image = combine_neighbors(neighbors, image_path, (3, 10000, 10000))
 
         # Check basic statistics of combined_image
         print("Combined image min value:", combined_image.min())
@@ -276,6 +276,13 @@ def main():
 
         for i, prediction in enumerate(predictions):
             prediction_np = prediction.cpu().numpy().astype(np.uint8)
+
+            center_h = (prediction_np.shape[0] - 5000) // 2
+            center_w = (prediction_np.shape[1] - 5000) // 2
+            center_prediction = prediction_np[
+                center_h : center_h + 5000, center_w : center_w + 5000
+            ]
+
             output_file = os.path.join(args.output_path, image_names[i])
 
             # Save prediction as GeoTIFF if input is GeoTIFF
@@ -284,7 +291,7 @@ def main():
                 meta = src.meta
                 meta.update(dtype=rasterio.uint8, count=1)
                 with rasterio.open(output_file, "w", **meta) as dst:
-                    dst.write(prediction_np, 1)
+                    dst.write(center_prediction, 1)
 
             # # Save the geotif as shapefile
             # os.system(
