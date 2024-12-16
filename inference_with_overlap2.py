@@ -101,24 +101,32 @@ class InferenceDataset(Dataset):
 
 
 def find_neighbors(image_path, radius=500):
-    # Find neighboring GeoTiff-Dateien
+    # Get the bounds of the current image
+    with rasterio.open(image_path) as src:
+        transform = src.transform
+        bounds = src.bounds
+
     neighbors = []
+
+    # Find neighboring GeoTiff-Dateien
     for file in glob.glob(os.path.join(os.path.dirname(image_path), "*.tif")):
         if file != image_path:
             with rasterio.open(file) as src:
-                transform = src.transform
-                bounds = src.bounds
+                neighbor_bounds = src.bounds
+
+                # Check if the neighbors' bounds intersect with the current image's bounds
                 if (
-                    bounds.left <= transform[2] + radius
-                    and bounds.right >= transform[2] - radius
-                    and bounds.bottom <= transform[4] + radius
-                    and bounds.top >= transform[4] - radius
+                    neighbor_bounds.left <= bounds.right + radius
+                    and neighbor_bounds.right >= bounds.left - radius
+                    and neighbor_bounds.bottom <= bounds.top + radius
+                    and neighbor_bounds.top >= bounds.bottom - radius
                 ):
                     neighbors.append(file)
+
     return neighbors
 
 
-def combine_neighbors(neighbors, output_shape, nodata_value=0):
+def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
     """
     Combine neighboring GeoTIFF files into a fixed-size mosaic.
 
@@ -137,7 +145,14 @@ def combine_neighbors(neighbors, output_shape, nodata_value=0):
     valid_neighbors = [neighbor for neighbor in neighbors if os.path.exists(neighbor)]
 
     if not valid_neighbors:
-        # If no valid files, return the blank canvas
+        # If no valid files, place the center image in the center of the blank canvas
+        center_h = (output_shape[1] - center_image.shape[1]) // 2
+        center_w = (output_shape[2] - center_image.shape[2]) // 2
+        combined[
+            :,
+            center_h : center_h + center_image.shape[1],
+            center_w : center_w + center_image.shape[2],
+        ] = center_image
         return combined
 
     # Open valid neighbors
