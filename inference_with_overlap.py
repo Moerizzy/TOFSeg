@@ -148,12 +148,14 @@ class GeoTIFFProcessor:
             List of adjacent tile paths
         """
 
-        print(tile_to_geom)
         with rasterio.open(current_tile_path) as src:
             current_bounds = box(*src.bounds)
 
+        print(current_bounds.bounds)
+
         adjacent_tiles = []
         for geom in spatial_index.query(current_bounds):
+            print(geom.bounds)
             candidate_tile_path = tile_to_geom[geom]
 
             if candidate_tile_path != current_tile_path:
