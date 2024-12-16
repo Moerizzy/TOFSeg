@@ -1,7 +1,5 @@
 import os
 import rasterio
-from rasterio.merge import merge
-from rasterio.windows import Window
 import numpy as np
 from shapely.geometry import box
 from shapely.strtree import STRtree
@@ -9,7 +7,6 @@ import logging
 from typing import List, Tuple, Dict
 import multiprocessing
 import tempfile
-from osgeo import gdal
 
 # Configure logging
 logging.basicConfig(
@@ -32,11 +29,6 @@ class GeoTIFFProcessor:
 
         # Ensure output folder exists
         os.makedirs(output_folder, exist_ok=True)
-
-        # Disable GDAL/PROJ warnings
-        gdal.UseExceptions()
-        gdal.SetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE")
-        gdal.SetConfigOption("GDAL_CACHEMAX", "20%")
 
     def get_tiles_and_bounds(self) -> Tuple[List[str], List[Tuple[str, box]]]:
         """
@@ -83,6 +75,7 @@ class GeoTIFFProcessor:
         spatial_index: STRtree,
         tile_to_geom: Dict[box, str],
         current_tile_path: str,
+        min_neighbors: int = 0,  # Optional minimum neighbor requirement
     ) -> List[str]:
         """
         Find neighboring tiles based on spatial overlap.
@@ -91,6 +84,7 @@ class GeoTIFFProcessor:
             spatial_index (STRtree): Spatial index of tiles
             tile_to_geom (Dict[box, str]): Mapping of geometries to tile paths
             current_tile_path (str): Path of current tile being processed
+            min_neighbors (int): Minimum number of expected neighbors
 
         Returns:
             List of neighboring tile paths
@@ -105,63 +99,111 @@ class GeoTIFFProcessor:
             if tile_to_geom[geom] != current_tile_path
         ]
 
+        # Optional: Raise a warning or handle if too few neighbors
+        if len(neighbor_paths) < min_neighbors:
+            logger.warning(
+                f"Tile {current_tile_path} has fewer than {min_neighbors} neighbors"
+            )
+
         return neighbor_paths
 
-    def create_vrt(self, center_tile: str, neighbors: List[str]) -> str:
+    def tiles_overlap(
+        self,
+        bounds1: Tuple[float, float, float, float],
+        bounds2: Tuple[float, float, float, float],
+    ) -> bool:
         """
-        Create a Virtual Raster (VRT) from center tile and neighbors.
+        Check if two tile bounding boxes overlap.
+
+        Args:
+            bounds1 (Tuple): Bounds of first tile (left, bottom, right, top)
+            bounds2 (Tuple): Bounds of second tile (left, bottom, right, top)
+
+        Returns:
+            bool: Whether tiles overlap
+        """
+        left1, bottom1, right1, top1 = bounds1
+        left2, bottom2, right2, top2 = bounds2
+
+        return not (
+            right1 < left2 or left1 > right2 or top1 < bottom2 or bottom1 > top2
+        )
+
+    def merge_neighboring_tiles(
+        self, center_tile: str, neighbors: List[str]
+    ) -> np.ndarray:
+        """
+        Merge center tile with neighboring tiles.
 
         Args:
             center_tile (str): Path to the center tile
             neighbors (List[str]): Paths to neighboring tiles
 
         Returns:
-            str: Path to created VRT file
+            np.ndarray: Merged array of tiles
         """
-        with tempfile.NamedTemporaryFile(suffix=".vrt", delete=False) as temp_vrt:
-            vrt_path = temp_vrt.name
-
         try:
-            vrt_options = gdal.BuildVRTOptions(resolution="highest", addAlpha=True)
-            gdal.BuildVRT(vrt_path, [center_tile] + neighbors, options=vrt_options)
-            return vrt_path
+            # Open center tile
+            with rasterio.open(center_tile) as center_src:
+                center_data = center_src.read()
+                center_bounds = center_src.bounds
+                center_transform = center_src.transform
+                center_crs = center_src.crs
+
+            # Initialize merged array with center tile
+            merged_data = center_data.copy()
+
+            # Process each neighbor
+            for neighbor_path in neighbors:
+                with rasterio.open(neighbor_path) as neighbor_src:
+                    neighbor_data = neighbor_src.read()
+                    neighbor_bounds = neighbor_src.bounds
+
+                    # Check if tiles actually overlap
+                    if self.tiles_overlap(center_bounds, neighbor_bounds):
+                        # Align and merge neighbor data
+                        merged_data = np.concatenate(
+                            [merged_data, neighbor_data], axis=0
+                        )
+
+            return merged_data
+
         except Exception as e:
-            logger.error(f"Error creating VRT: {e}")
+            logger.error(f"Error merging tiles: {e}")
             return None
 
     def cutout_and_process_tile(
-        self, vrt_path: str, center_tile_path: str
+        self, merged_data: np.ndarray, center_tile_path: str
     ) -> np.ndarray:
         """
         Cut out overlapping areas and process the tile.
 
         Args:
-            vrt_path (str): Path to the VRT file
+            merged_data (np.ndarray): Merged tile data
             center_tile_path (str): Path to the center tile
 
         Returns:
             np.ndarray: Processed tile data
         """
         try:
-            with rasterio.open(vrt_path) as vrt, rasterio.open(
-                center_tile_path
-            ) as center_tile:
-                # Get window for the center tile
-                center_window = vrt.window(*center_tile.bounds)
+            with rasterio.open(center_tile_path) as center_tile:
+                # Get center tile's shape and bounds
+                center_shape = center_tile.shape
+                center_bounds = center_tile.bounds
 
-                # Expand the window to include neighbors
-                expanded_window = Window(
-                    col_off=max(0, center_window.col_off - center_window.width // 2),
-                    row_off=max(0, center_window.row_off - center_window.height // 2),
-                    width=center_window.width * 2,
-                    height=center_window.height * 2,
-                )
+                # Extract center portion from merged data
+                # This is a simplified approach and might need refinement
+                # depending on your specific tile layout and processing needs
+                if merged_data is not None:
+                    # Assuming center tile is in the first portion of merged data
+                    processed_data = merged_data[
+                        :, : center_shape[1], : center_shape[2]
+                    ]
 
-                # Read expanded area
-                expanded_area = vrt.read(window=expanded_window)
+                    # Run inference (replace with your actual model)
+                    return self.run_inference(processed_data)
 
-                # Run inference (replace with your actual model)
-                return self.run_inference(expanded_area)
+                return None
         except Exception as e:
             logger.error(f"Error processing {center_tile_path}: {e}")
             return None
@@ -227,20 +269,18 @@ class GeoTIFFProcessor:
 
         neighbors = self.get_neighbors(self.spatial_index, self.tile_to_geom, tile)
 
-        # Create VRT for the tile and its neighbors
-        vrt_path = self.create_vrt(tile, neighbors)
+        # Merge neighboring tiles
+        merged_data = self.merge_neighboring_tiles(tile, neighbors)
 
-        if vrt_path:
+        if merged_data is not None:
             try:
                 # Process the tile
-                result = self.cutout_and_process_tile(vrt_path, tile)
+                result = self.cutout_and_process_tile(merged_data, tile)
 
                 # Save the result
                 self.save_result(result, tile)
-            finally:
-                # Clean up temporary VRT
-                if os.path.exists(vrt_path):
-                    os.unlink(vrt_path)
+            except Exception as e:
+                logger.error(f"Error processing tile {tile}: {e}")
 
     def process_all_tiles(self, max_workers: int = None):
         """
