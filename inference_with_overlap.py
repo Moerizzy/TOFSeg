@@ -434,13 +434,8 @@ class GeoTIFFProcessor:
         tiles, bounds = self.get_tiles_and_bounds()
         self.spatial_index, self.tile_to_geom = self.build_spatial_index(bounds)
 
-        # Determine number of workers
-        if max_workers is None:
-            max_workers = os.cpu_count()
-
         # Process tiles
-        with multiprocessing.Pool(processes=max_workers) as pool:
-            pool.map(self.process_tile, tiles)
+        return tiles
 
 
 def main():
@@ -475,11 +470,17 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
+    # Determine number of workers
+    if max_workers is None:
+        max_workers = os.cpu_count()
+
     # Create processor and process tiles
     processor = GeoTIFFProcessor(
         input_folder=args.input, output_folder=args.output, config=args.config
     )
-    processor.process_all_tiles(max_workers=args.workers)
+    tiles = processor.process_all_tiles()
+    with multiprocessing.Pool(processes=max_workers) as pool:
+        pool.map(processor.process_tile, tiles)
 
 
 if __name__ == "__main__":
