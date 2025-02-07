@@ -83,23 +83,32 @@ class InferenceDataset(Dataset):
         with rasterio.open(image_path) as src:
             height = src.height
             width = src.width
+            transform = src.transform
 
         neighbors = find_neighbors(image_path)
-        # Use dynamic size based on input image
+
+        # Calculate margin based on image size
+        margin = min(500, min(height, width) // 4)
+        output_shape = (3, height + 2 * margin, width + 2 * margin)
+
         combined_image = combine_neighbors(
-            neighbors, image_path, (3, height + 1000, width + 1000)
+            neighbors, image_path, output_shape, nodata_value=0
         )
 
         image = np.moveaxis(combined_image, 0, -1).astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         if self.transform:
             augmented = self.transform(image=image)
             image = augmented["image"]
+
         image = torch.tensor(image).permute(2, 0, 1).float()
+
         return {
             "image": image,
             "image_name": image_name,
             "original_size": (height, width),
+            "transform": transform,
         }
 
     def __len__(self):
@@ -128,49 +137,44 @@ def find_neighbors(image_path, radius=500):
 def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
     combined = np.full(output_shape, nodata_value, dtype=np.float32)
 
-    # First, handle the center image to ensure it's always in the right position
+    # First, handle the center image
     with rasterio.open(center_image) as src:
         center_data = src.read()
-        # Calculate the exact center position
         center_h = (output_shape[1] - center_data.shape[1]) // 2
         center_w = (output_shape[2] - center_data.shape[2]) // 2
-        # Place center image in the middle
         combined[
             :,
             center_h : center_h + center_data.shape[1],
             center_w : center_w + center_data.shape[2],
         ] = center_data
 
-    # Then handle neighbors if they exist
+    # Handle neighbors if they exist
     valid_neighbors = [n for n in neighbors if os.path.exists(n)]
     if valid_neighbors:
         src_files = [rasterio.open(neighbor) for neighbor in valid_neighbors]
         try:
             mosaic, transform = merge(src_files)
 
-            # Calculate the offset to align with center image
-            offset_h = (output_shape[1] - mosaic.shape[1]) // 2
-            offset_w = (output_shape[2] - mosaic.shape[2]) // 2
+            # Ensure mosaic doesn't exceed output dimensions
+            mosaic_h = min(mosaic.shape[1], output_shape[1])
+            mosaic_w = min(mosaic.shape[2], output_shape[2])
 
-            # Update only the areas outside the center image
-            mask = combined == nodata_value
-            combined[
-                :,
-                offset_h : offset_h + mosaic.shape[1],
-                offset_w : offset_w + mosaic.shape[2],
-            ][
-                mask[
-                    :,
-                    offset_h : offset_h + mosaic.shape[1],
-                    offset_w : offset_w + mosaic.shape[2],
+            # Calculate offset to center the mosaic
+            offset_h = (output_shape[1] - mosaic_h) // 2
+            offset_w = (output_shape[2] - mosaic_w) // 2
+
+            # Create mask for the target region
+            mask = (
+                combined[
+                    :, offset_h : offset_h + mosaic_h, offset_w : offset_w + mosaic_w
                 ]
-            ] = mosaic[
-                mask[
-                    :,
-                    offset_h : offset_h + mosaic.shape[1],
-                    offset_w : offset_w + mosaic.shape[2],
-                ]
-            ]
+                == nodata_value
+            )
+
+            # Update only where mask is True
+            combined[:, offset_h : offset_h + mosaic_h, offset_w : offset_w + mosaic_w][
+                mask
+            ] = mosaic[:, :mosaic_h, :mosaic_w][mask]
         finally:
             for src in src_files:
                 src.close()
