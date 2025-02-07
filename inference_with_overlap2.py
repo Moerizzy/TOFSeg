@@ -160,6 +160,9 @@ def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
 def sliding_window_inference(
     model, image, num_classes, patch_size=1024, keep_ratio=0.7
 ):
+    """
+    Perform sliding window inference with batch support and proper dimension handling
+    """
     stride = int(patch_size * keep_ratio)
     inner_size = int(patch_size * keep_ratio)
     outer_margin = (patch_size - inner_size) // 2
@@ -170,16 +173,21 @@ def sliding_window_inference(
     image = nn.functional.pad(image, (0, pad_w, 0, pad_h), mode="reflect")
     _, _, padded_H, padded_W = image.shape
 
+    # Initialize tensors with correct dimensions
     prediction = torch.zeros(
         (batch_size, num_classes, padded_H, padded_W), device=image.device
     )
-    count = torch.zeros((batch_size, 1, padded_H, padded_W), device=image.device)
+    count = torch.zeros(
+        (batch_size, num_classes, padded_H, padded_W), device=image.device
+    )
 
     for h in range(0, padded_H - patch_size + 1, stride):
         for w in range(0, padded_W - patch_size + 1, stride):
             window = image[:, :, h : h + patch_size, w : w + patch_size]
             with torch.no_grad():
                 output = model(window)
+
+            # Update predictions and counts
             prediction[
                 :,
                 :,
@@ -200,7 +208,7 @@ def sliding_window_inference(
 
     # Average the predictions where windows overlap
     valid_mask = count > 0
-    prediction[valid_mask] /= count[valid_mask]
+    prediction = torch.where(valid_mask, prediction / count, prediction)
 
     return prediction[:, :, :H, :W]
 
