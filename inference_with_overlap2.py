@@ -170,8 +170,10 @@ def sliding_window_inference(
     image = nn.functional.pad(image, (0, pad_w, 0, pad_h), mode="reflect")
     _, _, padded_H, padded_W = image.shape
 
-    prediction = torch.zeros((1, num_classes, padded_H, padded_W), device=image.device)
-    count = torch.zeros((1, 1, padded_H, padded_W), device=image.device)
+    prediction = torch.zeros(
+        (batch_size, num_classes, padded_H, padded_W), device=image.device
+    )
+    count = torch.zeros((batch_size, 1, padded_H, padded_W), device=image.device)
 
     for h in range(0, padded_H - patch_size + 1, stride):
         for w in range(0, padded_W - patch_size + 1, stride):
