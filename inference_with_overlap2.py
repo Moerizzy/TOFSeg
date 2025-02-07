@@ -8,6 +8,7 @@ import albumentations as albu
 from tools.cfg import py2cfg
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
+from torch.cuda.amp import autocast
 from tqdm import tqdm
 from train_supervision import *
 import os
@@ -160,9 +161,6 @@ def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
 def sliding_window_inference(
     model, image, num_classes, patch_size=1024, keep_ratio=0.7
 ):
-    """
-    Perform sliding window inference with improved handling of image boundaries
-    """
     stride = int(patch_size * keep_ratio)
     inner_size = int(patch_size * keep_ratio)
     outer_margin = (patch_size - inner_size) // 2
@@ -188,7 +186,8 @@ def sliding_window_inference(
         for w in range(0, padded_W - patch_size + 1, stride):
             window = image[:, :, h : h + patch_size, w : w + patch_size]
             with torch.no_grad():
-                output = model(window)
+                with autocast():
+                    output = model(window)
 
             # Update predictions with inner part of the output
             prediction[
@@ -214,7 +213,9 @@ def sliding_window_inference(
     prediction = torch.where(valid_mask, prediction / count, prediction)
 
     # Crop back to original image size
-    return prediction[:, :, :H, :W]
+    prediction = prediction[:, :, :H, :W]
+
+    return prediction
 
 
 def main():
@@ -231,7 +232,9 @@ def main():
     model.eval()
 
     dataset = InferenceDataset(image_dir=args.image_path, transform=albu.Normalize())
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
+    dataloader = DataLoader(
+        dataset, batch_size=args.batch_size, shuffle=False, num_workers=4
+    )
 
     os.makedirs(args.output_path, exist_ok=True)
 
