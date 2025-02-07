@@ -279,10 +279,10 @@ def main():
                 with rasterio.open(output_file, "w", **meta) as dst:
                     dst.write(center_prediction, 1)
 
-            # # Save the geotif as shapefile
-            # os.system(
-            #     f"gdal_polygonize.py -q {output_image} -f 'ESRI Shapefile' {output_image.replace('.tif', '.shp')}"
-            # )
+            # Save the geotif as shapefile
+            os.system(
+                f"gdal_polygonize.py -q {output_image} -f 'ESRI Shapefile' {output_image.replace('.tif', '.shp')}"
+            )
 
 
 if __name__ == "__main__":
