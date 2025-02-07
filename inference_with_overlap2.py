@@ -227,6 +227,7 @@ def main():
         config=config,
     )
     model.cuda()
+    model = torch.nn.DataParallel(model)
     model.eval()
 
     dataset = InferenceDataset(image_dir=args.image_path, transform=albu.Normalize())
@@ -278,7 +279,9 @@ def main():
 
                 # Write output with original geospatial metadata
                 profile = src.profile
-                profile.update(dtype=rasterio.uint8, count=1, compress="lzw")
+                profile.update(
+                    dtype=rasterio.uint8, count=1, compress="lzw", photometric=None
+                )
 
                 with rasterio.open(output_file, "w", **profile) as dst:
                     dst.write(prediction_np.astype(rasterio.uint8), 1)
