@@ -127,33 +127,53 @@ def find_neighbors(image_path, radius=500):
 
 def combine_neighbors(neighbors, center_image, output_shape, nodata_value=0):
     combined = np.full(output_shape, nodata_value, dtype=np.float32)
-    valid_neighbors = [n for n in neighbors if os.path.exists(n)]
 
-    if not valid_neighbors:
-        with rasterio.open(center_image) as src:
-            center_data = src.read()
+    # First, handle the center image to ensure it's always in the right position
+    with rasterio.open(center_image) as src:
+        center_data = src.read()
+        # Calculate the exact center position
         center_h = (output_shape[1] - center_data.shape[1]) // 2
         center_w = (output_shape[2] - center_data.shape[2]) // 2
+        # Place center image in the middle
         combined[
             :,
             center_h : center_h + center_data.shape[1],
             center_w : center_w + center_data.shape[2],
         ] = center_data
-        return combined
 
-    src_files = [rasterio.open(neighbor) for neighbor in valid_neighbors]
-    mosaic, transform = merge(src_files, nodata=nodata_value)
+    # Then handle neighbors if they exist
+    valid_neighbors = [n for n in neighbors if os.path.exists(n)]
+    if valid_neighbors:
+        src_files = [rasterio.open(neighbor) for neighbor in valid_neighbors]
+        try:
+            mosaic, transform = merge(src_files)
 
-    min_bands = min(mosaic.shape[0], output_shape[0])
-    min_height = min(mosaic.shape[1], output_shape[1])
-    min_width = min(mosaic.shape[2], output_shape[2])
+            # Calculate the offset to align with center image
+            offset_h = (output_shape[1] - mosaic.shape[1]) // 2
+            offset_w = (output_shape[2] - mosaic.shape[2]) // 2
 
-    combined[:min_bands, :min_height, :min_width] = mosaic[
-        :min_bands, :min_height, :min_width
-    ]
-
-    for src in src_files:
-        src.close()
+            # Update only the areas outside the center image
+            mask = combined == nodata_value
+            combined[
+                :,
+                offset_h : offset_h + mosaic.shape[1],
+                offset_w : offset_w + mosaic.shape[2],
+            ][
+                mask[
+                    :,
+                    offset_h : offset_h + mosaic.shape[1],
+                    offset_w : offset_w + mosaic.shape[2],
+                ]
+            ] = mosaic[
+                mask[
+                    :,
+                    offset_h : offset_h + mosaic.shape[1],
+                    offset_w : offset_w + mosaic.shape[2],
+                ]
+            ]
+        finally:
+            for src in src_files:
+                src.close()
 
     return combined
 
@@ -232,9 +252,7 @@ def main():
     model.eval()
 
     dataset = InferenceDataset(image_dir=args.image_path, transform=albu.Normalize())
-    dataloader = DataLoader(
-        dataset, batch_size=args.batch_size, shuffle=False, num_workers=4
-    )
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
     os.makedirs(args.output_path, exist_ok=True)
 
