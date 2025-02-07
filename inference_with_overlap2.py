@@ -161,19 +161,21 @@ def sliding_window_inference(
     model, image, num_classes, patch_size=1024, keep_ratio=0.7
 ):
     """
-    Perform sliding window inference with batch support and proper dimension handling
+    Perform sliding window inference with improved handling of image boundaries
     """
     stride = int(patch_size * keep_ratio)
     inner_size = int(patch_size * keep_ratio)
     outer_margin = (patch_size - inner_size) // 2
 
     batch_size, _, H, W = image.shape
+
+    # Pad image to ensure full coverage
     pad_h = (patch_size - H % patch_size) % patch_size
     pad_w = (patch_size - W % patch_size) % patch_size
     image = nn.functional.pad(image, (0, pad_w, 0, pad_h), mode="reflect")
     _, _, padded_H, padded_W = image.shape
 
-    # Initialize tensors with correct dimensions
+    # Initialize prediction tensor
     prediction = torch.zeros(
         (batch_size, num_classes, padded_H, padded_W), device=image.device
     )
@@ -181,13 +183,14 @@ def sliding_window_inference(
         (batch_size, num_classes, padded_H, padded_W), device=image.device
     )
 
+    # Sliding window inference
     for h in range(0, padded_H - patch_size + 1, stride):
         for w in range(0, padded_W - patch_size + 1, stride):
             window = image[:, :, h : h + patch_size, w : w + patch_size]
             with torch.no_grad():
                 output = model(window)
 
-            # Update predictions and counts
+            # Update predictions with inner part of the output
             prediction[
                 :,
                 :,
@@ -206,10 +209,11 @@ def sliding_window_inference(
                 w + outer_margin : w + outer_margin + inner_size,
             ] += 1
 
-    # Average the predictions where windows overlap
+    # Average predictions
     valid_mask = count > 0
     prediction = torch.where(valid_mask, prediction / count, prediction)
 
+    # Crop back to original image size
     return prediction[:, :, :H, :W]
 
 
@@ -233,7 +237,9 @@ def main():
     for batch in tqdm(dataloader, desc="Processing Images"):
         images = batch["image"].cuda()
         image_names = batch["image_name"]
-        original_sizes = batch["original_size"]
+
+        # Store original metadata
+        input_paths = [os.path.join(args.image_path, name) for name in image_names]
 
         predictions = sliding_window_inference(
             model,
@@ -244,26 +250,38 @@ def main():
         )
         predictions = nn.Softmax(dim=1)(predictions).argmax(dim=1)
 
-        for i, prediction in enumerate(predictions):
+        for i in range(len(images)):
+            prediction = predictions[i]
             prediction_np = prediction.cpu().numpy().astype(np.uint8)
-            orig_h, orig_w = original_sizes[i]
 
-            # Extract the center portion matching the original image size
-            center_h = (prediction_np.shape[0] - orig_h) // 2
-            center_w = (prediction_np.shape[1] - orig_w) // 2
-            center_prediction = prediction_np[
-                center_h : center_h + orig_h, center_w : center_w + orig_w
-            ]
-
+            # Use original input path to preserve exact geospatial reference
+            input_path = input_paths[i]
             output_file = os.path.join(args.output_path, image_names[i])
 
-            # Save prediction as GeoTIFF
-            input_path = os.path.join(args.image_path, image_names[i])
+            # Open original image to get exact metadata
             with rasterio.open(input_path) as src:
-                meta = src.meta
-                meta.update(dtype=rasterio.uint8, count=1)
-                with rasterio.open(output_file, "w", **meta) as dst:
-                    dst.write(center_prediction, 1)
+                # Get original image dimensions and transform
+                original_transform = src.transform
+                original_crs = src.crs
+
+                # Determine crop parameters if needed
+                height, width = src.height, src.width
+
+                # Ensure prediction matches original image exactly
+                if prediction_np.shape != (height, width):
+                    # Center crop or pad to match original image
+                    center_h = (prediction_np.shape[0] - height) // 2
+                    center_w = (prediction_np.shape[1] - width) // 2
+                    prediction_np = prediction_np[
+                        center_h : center_h + height, center_w : center_w + width
+                    ]
+
+                # Write output with original geospatial metadata
+                profile = src.profile
+                profile.update(dtype=rasterio.uint8, count=1, compress="lzw")
+
+                with rasterio.open(output_file, "w", **profile) as dst:
+                    dst.write(prediction_np.astype(rasterio.uint8), 1)
 
             # Convert to shapefile
             os.system(
