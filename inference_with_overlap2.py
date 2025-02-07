@@ -164,7 +164,7 @@ def sliding_window_inference(
     inner_size = int(patch_size * keep_ratio)
     outer_margin = (patch_size - inner_size) // 2
 
-    _, _, H, W = image.shape
+    batch_size, _, H, W = image.shape
     pad_h = (patch_size - H % patch_size) % patch_size
     pad_w = (patch_size - W % patch_size) % patch_size
     image = nn.functional.pad(image, (0, pad_w, 0, pad_h), mode="reflect")
